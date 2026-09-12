@@ -20,7 +20,9 @@ export default function App() {
   return (
     <Routes>
       {/* Government dashboard has its own full-screen layout (sidebar + three-band header) */}
-      <Route path="/government" element={<GovernmentDashboard />} />
+      <Route element={<ProtectedRoute allow={['government', 'admin']} />}>
+        <Route path="/government" element={<GovernmentDashboard />} />
+      </Route>
 
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />

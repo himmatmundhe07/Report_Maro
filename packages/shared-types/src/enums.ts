@@ -5,7 +5,7 @@ import { z } from 'zod';
  * Mongoose enums accept (see backend/src/models/*.model.js). Keep in sync —
  * if a teammate adds a value on the Mongoose side, add it here too.
  */
-export const userRoleSchema = z.enum(['citizen', 'admin', 'university', 'industry']);
+export const userRoleSchema = z.enum(['citizen', 'admin', 'university', 'industry', 'government']);
 export type UserRole = z.infer<typeof userRoleSchema>;
 
 export const problemCategorySchema = z.enum(['water', 'road', 'health', 'other']);

@@ -25,6 +25,7 @@ interface PostalPostOffice {
 }
 
 export type UniversityRegisterSubRole = 'student' | 'mentor' | 'institution';
+export type GovernmentRegisterSubRole = 'state' | 'district' | 'department';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -43,18 +44,28 @@ export default function Register() {
   const isCitizenTarget = queryRole === 'citizen' || queryFor === 'submit';
   const isUniversityTarget = queryRole === 'university';
   const isIndustryTarget = queryRole === 'industry';
+  const isGovernmentTarget = queryRole === 'government';
 
   const [showAllRoles, setShowAllRoles] = useState(false);
 
   const isCitizenOnly = !showAllRoles && isCitizenTarget && !isUniversityTarget && !isIndustryTarget;
   const isUniversityOnly = !showAllRoles && isUniversityTarget && !isIndustryTarget;
   const isIndustryOnly = !showAllRoles && isIndustryTarget && !isCitizenTarget && !isUniversityTarget;
+  const isGovernmentOnly = !showAllRoles && isGovernmentTarget && !isCitizenTarget && !isUniversityTarget && !isIndustryTarget;
 
   // Role
   const [role, setRole] = useState<UserRole>(() => {
     if (isUniversityTarget) return 'university';
     if (isIndustryTarget) return 'industry';
+    if (isGovernmentTarget) return 'government';
     return 'citizen';
+  });
+
+  // Government Sub-Role
+  const [govSubRole, setGovSubRole] = useState<GovernmentRegisterSubRole>(() => {
+    if (queryType === 'district') return 'district';
+    if (queryType === 'department') return 'department';
+    return 'state';
   });
 
   // University Sub-Role
@@ -98,6 +109,10 @@ export default function Register() {
   const [corporateCin, setCorporateCin] = useState('');
   const [corporateDesignation, setCorporateDesignation] = useState('CSR Head / Nodal Manager');
 
+  // Government-specific fields
+  const [govDesignation, setGovDesignation] = useState('State Nodal Officer');
+  const [govDepartment, setGovDepartment] = useState('Department of Health');
+
   // Personal Info
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
@@ -140,14 +155,20 @@ export default function Register() {
       setRole('university');
     } else if (queryRole === 'industry') {
       setRole('industry');
+    } else if (isGovernmentOnly || queryRole === 'government') {
+      setRole('government');
     } else if (queryRole === 'citizen') {
       setRole('citizen');
     }
 
+    if (queryType === 'state') setGovSubRole('state');
+    else if (queryType === 'district') setGovSubRole('district');
+    else if (queryType === 'department') setGovSubRole('department');
+
     if (queryType === 'mentor') setUnivSubRole('mentor');
     else if (queryType === 'institution' || queryType === 'dean') setUnivSubRole('institution');
     else if (queryType === 'student') setUnivSubRole('student');
-  }, [queryRole, queryType, isCitizenOnly, isUniversityOnly, isIndustryOnly]);
+  }, [queryRole, queryType, isCitizenOnly, isUniversityOnly, isIndustryOnly, isGovernmentOnly]);
 
   // When university is selected, auto-update campus location, AISHE code, and existing departments
   useEffect(() => {
@@ -448,7 +469,15 @@ export default function Register() {
         finalOrg = `${effectiveUnivName} | Role: Institutional Admin (${adminDesignation}, AISHE: ${aisheCodeInput.trim() || 'U-0205'})`;
       }
     } else if (role === 'industry') {
-      finalOrg = organization.trim() || 'Industry / CSR Co-sponsor';
+      finalOrg = `${organization.trim() || 'Industry Partner'} | Role: ${corporateDesignation} ${corporateCin ? `(CIN: ${corporateCin.trim()})` : ''}`;
+    } else if (role === 'government') {
+      if (govSubRole === 'state') {
+        finalOrg = `Government of Jharkhand | Role: ${govDesignation}`;
+      } else if (govSubRole === 'district') {
+        finalOrg = `District Administration, ${district} | Role: ${govDesignation}`;
+      } else {
+        finalOrg = `${govDepartment} | Role: ${govDesignation}`;
+      }
     }
 
     // 5. Validate with shared Zod schema
@@ -510,12 +539,29 @@ export default function Register() {
         }
       }
 
-      const res = await apiClient.post('/auth/register', {
+      const payload: Record<string, unknown> = {
         ...parsed.data,
         departments: univSubRole === 'institution' ? institutionDepartments : (effectiveDept ? [effectiveDept] : []),
         university_code: selectedUnivId !== '__other__' ? selectedUnivId : undefined,
         university_name: effectiveUnivName,
-      });
+      };
+
+      // Only include geographic info for citizens or district-level government officials
+      if (role === 'citizen' || (role === 'government' && govSubRole === 'district')) {
+        if (selectedDistrictObj) {
+          payload.district = selectedDistrictObj.name;
+        }
+        
+        if (role === 'citizen') {
+          payload.taluka = effectiveTaluka;
+          payload.village_or_city = effectiveVillage;
+          payload.pincode = pincode.trim();
+          payload.lgd_district_code = selectedDistrictObj?.code;
+          payload.lgd_block_code = selectedBlockObj?.code;
+        }
+      }
+
+      const res = await apiClient.post('/auth/register', payload);
       setSession(res.data.user, res.data.token);
 
       // Save client profile details in localStorage for enriched dashboard experience
@@ -539,8 +585,10 @@ export default function Register() {
       }
 
       // Smart role-based redirect
-      if (role === 'citizen') {
-        if (queryFor === 'submit') {
+      if (role === 'citizen' || role === 'government') {
+        if (role === 'government') {
+          navigate('/government');
+        } else if (queryFor === 'submit') {
           navigate('/submit');
         } else {
           navigate('/dashboard');
@@ -1254,6 +1302,67 @@ export default function Register() {
                     onChange={(e) => setCorporateDesignation(e.target.value)}
                   />
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* SECTION 2D: GOVERNMENT PROFILE */}
+          {role === 'government' && (
+            <div className="border border-border p-4 bg-paper/50 rounded-[2px] space-y-4 mb-4">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-turmeric-deep border-b border-border pb-1.5 mb-3 flex items-center gap-1.5 font-mono">
+                <span className="material-symbols-outlined text-base">account_balance</span>
+                <span>2. Government / State Official Profile</span>
+              </h2>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-ink-muted mb-1">
+                    Designation / पदनाम <span className="text-urgent">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder={govSubRole === 'district' ? 'e.g. Deputy Commissioner' : 'e.g. Nodal Officer / Secretary'}
+                    className="w-full rounded-[2px] border border-border px-3 py-2 text-sm bg-white text-ink focus:outline-none focus:border-turmeric-deep"
+                    value={govDesignation}
+                    onChange={(e) => setGovDesignation(e.target.value)}
+                  />
+                </div>
+
+                {govSubRole === 'district' && (
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-ink-muted mb-1">
+                      Select District <span className="text-urgent">*</span>
+                    </label>
+                    <select
+                      value={district}
+                      onChange={(e) => setDistrict(e.target.value)}
+                      className="w-full rounded-[2px] border border-border px-3 py-2 text-sm bg-white text-ink focus:outline-none focus:border-turmeric-deep"
+                    >
+                      {JHARKHAND_DISTRICTS.map((dist) => (
+                        <option key={dist.code} value={dist.name}>
+                          {dist.name} (LGD: {dist.code})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {(govSubRole === 'department' || govSubRole === 'state') && (
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-ink-muted mb-1">
+                      Department Name <span className="text-urgent">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Department of Health and Family Welfare"
+                      className="w-full rounded-[2px] border border-border px-3 py-2 text-sm bg-white text-ink focus:outline-none focus:border-turmeric-deep"
+                      value={govDepartment}
+                      onChange={(e) => setGovDepartment(e.target.value)}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           )}

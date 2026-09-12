@@ -49,6 +49,30 @@ export const mockUsers: (User & { password: string })[] = [
     organization: 'Bharat Coking Coal Limited (BCCL)',
     password: 'mock-login-not-a-secret',
   },
+  {
+    id: '000000000000000000000007',
+    full_name: 'State Nodal Officer',
+    email: 'state.admin@jharkhand.gov.in',
+    role: 'government',
+    organization: 'Government of Jharkhand',
+    password: 'mock-login-not-a-secret',
+  },
+  {
+    id: '000000000000000000000008',
+    full_name: 'District Collector / Magistrate',
+    email: 'dc.ranchi@jharkhand.gov.in',
+    role: 'government',
+    organization: 'District Administration',
+    password: 'mock-login-not-a-secret',
+  },
+  {
+    id: '000000000000000000000009',
+    full_name: 'Department Secretary',
+    email: 'dept.health@jharkhand.gov.in',
+    role: 'government',
+    organization: 'Department of Health',
+    password: 'mock-login-not-a-secret',
+  },
 ];
 
 export const mockProblems: Problem[] = [

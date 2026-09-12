@@ -486,7 +486,7 @@ export default function GovernmentDashboard() {
         {/* ── Band 2 — Identity bar ── */}
         <div className="flex items-center justify-between border-b border-border bg-paper px-6 py-3">
           <div className="flex items-center gap-4">
-            <img src="/favicon.svg" alt="Samadhan Setu Logo" className="h-12 w-12 object-contain" />
+            <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-Saiq8B8HfuJ4idwInA2z4XrnYcglrpW8bRdUTgZg5iXUb0e_TnzlHMlZlopZXeOXOYukXp0nesbHgwQK9l_Pp6se0AyCWFS4ziY870E-CQTJo0b-fdaP6NMuLbhSJhhIfCUG3J0PozKv_wHL5tAjIKPlKHqNcOUsRQUtWG5OtawQ9TbeJ5cDnjxkvJBcVVnYl8-hn2TGt2btwhJDFSmub6fzbIavbHEUR98gdp5KmsOH-CpBr8k" alt="Emblem of Jharkhand" className="h-12 w-12 object-cover shrink-0 rounded-full border border-border bg-white" />
             <div>
               <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ink-muted">
                 Department of Higher & Technical Education · Government of Jharkhand

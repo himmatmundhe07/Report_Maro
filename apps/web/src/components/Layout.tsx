@@ -238,7 +238,7 @@ export function Layout() {
                           Official Role-Based Login
                         </div>
                         <Link
-                          to="/login?role=admin"
+                          to="/login?role=government"
                           className="flex items-start gap-2.5 px-3 py-2 hover:bg-paper text-ink transition-colors border-b border-border/50"
                           onClick={() => setLoginMenuOpen(false)}
                         >
@@ -348,6 +348,17 @@ export function Layout() {
                           <div>
                             <div className="text-xs font-bold text-navy">Citizen Account</div>
                             <div className="text-[10px] text-ink-muted">LGD &amp; Pincode-integrated reporting</div>
+                          </div>
+                        </Link>
+                        <Link
+                          to="/register?role=government"
+                          className="flex items-start gap-2.5 px-3 py-2 hover:bg-paper text-ink transition-colors border-b border-border/50"
+                          onClick={() => setRegisterMenuOpen(false)}
+                        >
+                          <span className="text-base mt-0.5">🏛️</span>
+                          <div>
+                            <div className="text-xs font-bold text-navy">Government / State Admin</div>
+                            <div className="text-[10px] text-ink-muted">State, District, or Department Official</div>
                           </div>
                         </Link>
                         <div className="bg-paper-dark/70 px-3 py-1 text-[10px] font-bold text-forest uppercase tracking-wider font-mono border-b border-border/40">

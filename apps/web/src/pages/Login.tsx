@@ -6,7 +6,8 @@ import { useAuthStore } from '../store/authStore.js';
 import { Button } from '../components/Button.js';
 import { useJharkhandUniversities, getUniversityById } from '../data/jharkhandUniversities.js';
 
-export type LoginRoleTab = 'citizen' | 'university' | 'industry' | 'admin';
+export type LoginRoleTab = 'citizen' | 'university' | 'industry' | 'admin' | 'government';
+export type GovernmentSubRole = 'state' | 'district' | 'department';
 export type UniversitySubRole = 'student' | 'mentor' | 'dean';
 
 export default function Login() {
@@ -35,12 +36,14 @@ export default function Login() {
   const isCitizenTarget = queryRole === 'citizen' || fromPath === '/submit' || queryFor === 'submit';
   const isUniversityTarget = isUniversityRedirect || queryRole === 'university';
   const isIndustryTarget = queryRole === 'industry' || fromPath?.startsWith('/industry');
+  const isGovernmentTarget = queryRole === 'government' || fromPath?.startsWith('/government');
 
   const [showAllRoles, setShowAllRoles] = useState(false);
 
   const isCitizenOnly = !showAllRoles && isCitizenTarget && !isUniversityTarget && !isIndustryTarget;
   const isUniversityOnly = !showAllRoles && isUniversityTarget && !isIndustryTarget;
   const isIndustryOnly = !showAllRoles && isIndustryTarget && !isCitizenTarget && !isUniversityTarget;
+  const isGovernmentOnly = !showAllRoles && isGovernmentTarget && !isCitizenTarget && !isUniversityTarget && !isIndustryTarget;
 
   // Role Tab selection
   const [activeRole, setActiveRole] = useState<LoginRoleTab>(() => {
@@ -48,7 +51,15 @@ export default function Login() {
     if (isUniversityTarget) return 'university';
     if (isIndustryTarget) return 'industry';
     if (queryRole === 'admin') return 'admin';
+    if (isGovernmentTarget) return 'government';
     return 'citizen';
+  });
+
+  // Government Sub-Role selection
+  const [govSubRole, setGovSubRole] = useState<GovernmentSubRole>(() => {
+    if (queryType === 'district') return 'district';
+    if (queryType === 'department') return 'department';
+    return 'state';
   });
 
   // University Sub-Role selection
@@ -84,12 +95,18 @@ export default function Login() {
       setActiveRole('industry');
     } else if (queryRole === 'citizen') {
       setActiveRole('citizen');
+    } else if (isGovernmentOnly || queryRole === 'government') {
+      setActiveRole('government');
     }
+
+    if (queryType === 'state') setGovSubRole('state');
+    else if (queryType === 'district') setGovSubRole('district');
+    else if (queryType === 'department') setGovSubRole('department');
 
     if (queryType === 'mentor') setUnivSubRole('mentor');
     else if (queryType === 'dean') setUnivSubRole('dean');
     else if (queryType === 'student') setUnivSubRole('student');
-  }, [queryRole, queryType, isCitizenOnly, isUniversityOnly, isIndustryOnly]);
+  }, [queryRole, queryType, isCitizenOnly, isUniversityOnly, isIndustryOnly, isGovernmentOnly]);
 
   // Set default placeholder/value when university role or subrole switches
   useEffect(() => {
@@ -107,8 +124,12 @@ export default function Login() {
       setEmail('tata.csr@tatasteel.com');
     } else if (activeRole === 'admin') {
       setEmail('admin@sihportal.dev');
+    } else if (activeRole === 'government') {
+      if (govSubRole === 'state') setEmail('state.admin@jharkhand.gov.in');
+      else if (govSubRole === 'district') setEmail('dc.ranchi@jharkhand.gov.in');
+      else setEmail('dept.health@jharkhand.gov.in');
     }
-  }, [activeRole, univSubRole, selectedUnivId, selectedUniv?.domain]);
+  }, [activeRole, univSubRole, selectedUnivId, selectedUniv?.domain, govSubRole]);
 
   const performLogin = async (loginEmail: string, loginPass: string, forcedRole?: string) => {
     setError(null);
@@ -159,6 +180,9 @@ export default function Login() {
             role: 'admin',
           }).catch(() => null);
           res = await apiClient.post('/auth/login', parsed.data);
+        } else if (loginEmail === 'state.admin@jharkhand.gov.in' || loginEmail.startsWith('state.admin') || loginEmail.startsWith('dc.') || loginEmail.startsWith('dept.')) {
+          // No longer hardcoded. The account must exist in the database (e.g. via the seed script).
+          res = await apiClient.post('/auth/login', parsed.data);
         } else if (loginEmail === 'tata.csr@tatasteel.com') {
           await apiClient.post('/auth/register', {
             full_name: 'Vikram Singhania (CSR Lead)',
@@ -203,6 +227,8 @@ export default function Login() {
           navigate('/university');
         } else if (role === 'admin') {
           navigate('/admin');
+        } else if (role === 'government') {
+          navigate('/government');
         } else if (role === 'industry') {
           navigate('/industry');
         } else {
@@ -351,9 +377,9 @@ export default function Login() {
 
               <button
                 type="button"
-                onClick={() => setActiveRole('admin')}
+                onClick={() => setActiveRole('government')}
                 className={`py-2 px-2 text-xs font-bold rounded-[2px] transition-all flex flex-col items-center justify-center gap-0.5 ${
-                  activeRole === 'admin'
+                  activeRole === 'government'
                     ? 'bg-navy text-white shadow-sm'
                     : 'text-ink-muted hover:text-navy hover:bg-white/60'
                 }`}
@@ -361,6 +387,63 @@ export default function Login() {
                 <span className="text-sm">🏛️</span>
                 <span className="text-[11px]">Government</span>
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* GOVERNMENT-SPECIFIC NESTED SELECTORS */}
+        {(activeRole === 'government' || isGovernmentOnly) && (
+          <div className="mb-5 p-3.5 bg-paper-dark/60 border-2 border-turmeric-deep/50 rounded-[2px] space-y-3">
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-bold uppercase tracking-wider text-turmeric-deep flex items-center gap-1 font-mono">
+                  <span>🏛️</span>
+                  <span>Select Official Role / पदनाम</span>
+                </span>
+                <span className="text-[10px] text-ink-muted font-mono">
+                  Direct Desk Routing
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setGovSubRole('state')}
+                  className={`py-2 px-2 rounded-[2px] text-center text-xs font-bold border transition-colors ${
+                    govSubRole === 'state'
+                      ? 'bg-turmeric-deep text-white border-turmeric-deep shadow-sm'
+                      : 'bg-white text-ink border-border hover:border-turmeric-deep'
+                  }`}
+                >
+                  <div className="text-xs">🏛️ State</div>
+                  <div className="text-[9px] font-normal opacity-80 truncate">Nodal Officer</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setGovSubRole('district')}
+                  className={`py-2 px-2 rounded-[2px] text-center text-xs font-bold border transition-colors ${
+                    govSubRole === 'district'
+                      ? 'bg-turmeric-deep text-white border-turmeric-deep shadow-sm'
+                      : 'bg-white text-ink border-border hover:border-turmeric-deep'
+                  }`}
+                >
+                  <div className="text-xs">🏢 District</div>
+                  <div className="text-[9px] font-normal opacity-80 truncate">DC / Magistrate</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setGovSubRole('department')}
+                  className={`py-2 px-2 rounded-[2px] text-center text-xs font-bold border transition-colors ${
+                    govSubRole === 'department'
+                      ? 'bg-turmeric-deep text-white border-turmeric-deep shadow-sm'
+                      : 'bg-white text-ink border-border hover:border-turmeric-deep'
+                  }`}
+                >
+                  <div className="text-xs">📋 Dept</div>
+                  <div className="text-[9px] font-normal opacity-80 truncate">Secretary / Head</div>
+                </button>
+              </div>
             </div>
           </div>
         )}
