@@ -1,4 +1,13 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { MapContainer, TileLayer, GeoJSON, CircleMarker, Tooltip, useMap } from 'react-leaflet';
+import type { Layer, LeafletMouseEvent, PathOptions } from 'leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { jharkhandDistrictsGeoJson } from '../../data/jharkhandDistricts';
+
+/* ─────────────────────────────────────────────────────────
+   Type definitions
+   ───────────────────────────────────────────────────────── */
 
 export interface DistrictGeoData {
   name: string;
@@ -15,197 +24,131 @@ interface JharkhandMapProps {
   onSelectDistrict: (district: DistrictGeoData) => void;
 }
 
-interface DistrictSvgCoord {
-  id: string;
-  name: string;
+/* ─────────────────────────────────────────────────────────
+   Jharkhand Administrative Geodata & Metadata
+   ───────────────────────────────────────────────────────── */
+
+interface DistrictMeta {
   division: string;
-  center: [number, number]; // [cx, cy] for labels
-  path: string; // SVG path
+  hq: string;
+  center: [number, number];
+  hindi: string;
+  densityTier: 'Critical' | 'High' | 'Medium' | 'Low' | 'Stable';
 }
 
-// Stylized yet geographically representative vector geometry for the 24 districts of Jharkhand
-// Coordinates projected onto a 660x480 coordinate space
-const DISTRICT_PATHS: DistrictSvgCoord[] = [
-  // ── PALAMU DIVISION (North-West) ──
-  {
-    id: 'garhwa',
-    name: 'Garhwa',
-    division: 'Palamu',
-    center: [55, 110],
-    path: 'M 30,70 L 80,60 L 90,130 L 60,170 L 25,140 Z',
-  },
-  {
-    id: 'palamu',
-    name: 'Palamu',
-    division: 'Palamu',
-    center: [125, 125],
-    path: 'M 80,60 L 160,70 L 175,130 L 140,175 L 90,130 Z',
-  },
-  {
-    id: 'latehar',
-    name: 'Latehar',
-    division: 'Palamu',
-    center: [140, 195],
-    path: 'M 90,130 L 140,175 L 185,170 L 195,230 L 120,240 L 60,170 Z',
-  },
+const DISTRICT_METADATA: Record<string, DistrictMeta> = {
+  'Garhwa': { division: 'Palamu', hq: 'Garhwa', center: [24.1611, 83.8105], hindi: 'गढ़वा', densityTier: 'Medium' },
+  'Palamu': { division: 'Palamu', hq: 'Medininagar', center: [24.0416, 84.0700], hindi: 'पलामू', densityTier: 'High' },
+  'Latehar': { division: 'Palamu', hq: 'Latehar', center: [23.7437, 84.4984], hindi: 'लातेहार', densityTier: 'Low' },
+  'Chatra': { division: 'North Chotanagpur', hq: 'Chatra', center: [24.2144, 84.8718], hindi: 'चतरा', densityTier: 'Low' },
+  'Hazaribagh': { division: 'North Chotanagpur', hq: 'Hazaribagh', center: [23.9961, 85.3670], hindi: 'हज़ारीबाग़', densityTier: 'High' },
+  'Koderma': { division: 'North Chotanagpur', hq: 'Koderma', center: [24.4697, 85.5946], hindi: 'कोडरमा', densityTier: 'Low' },
+  'Giridih': { division: 'North Chotanagpur', hq: 'Giridih', center: [24.1873, 86.3094], hindi: 'गिरिडीह', densityTier: 'High' },
+  'Ramgarh': { division: 'North Chotanagpur', hq: 'Ramgarh', center: [23.6300, 85.5147], hindi: 'रामगढ़', densityTier: 'Medium' },
+  'Bokaro': { division: 'North Chotanagpur', hq: 'Bokaro Steel City', center: [23.6693, 85.9875], hindi: 'बोकारो', densityTier: 'High' },
+  'Dhanbad': { division: 'North Chotanagpur', hq: 'Dhanbad', center: [23.7957, 86.4304], hindi: 'धनबाद', densityTier: 'Critical' },
+  'Lohardaga': { division: 'South Chotanagpur', hq: 'Lohardaga', center: [23.4356, 84.6784], hindi: 'लोहरदगा', densityTier: 'Low' },
+  'Gumla': { division: 'South Chotanagpur', hq: 'Gumla', center: [23.0440, 84.5422], hindi: 'गुमला', densityTier: 'Low' },
+  'Simdega': { division: 'South Chotanagpur', hq: 'Simdega', center: [22.6143, 84.5098], hindi: 'सिमडेगा', densityTier: 'Stable' },
+  'Ranchi': { division: 'South Chotanagpur', hq: 'Ranchi', center: [23.3441, 85.3096], hindi: 'राँची', densityTier: 'Critical' },
+  'Khunti': { division: 'South Chotanagpur', hq: 'Khunti', center: [23.0742, 85.2787], hindi: 'खूँटी', densityTier: 'Low' },
+  'West Singhbhum': { division: 'Kolhan', hq: 'Chaibasa', center: [22.5539, 85.8142], hindi: 'पश्चिमी सिंहभूम', densityTier: 'Medium' },
+  'Seraikela-Kharsawan': { division: 'Kolhan', hq: 'Seraikela', center: [22.7006, 85.9818], hindi: 'सरायकेला खरसावां', densityTier: 'Medium' },
+  'East Singhbhum': { division: 'Kolhan', hq: 'Jamshedpur', center: [22.8046, 86.2029], hindi: 'पूर्वी सिंहभूम', densityTier: 'Critical' },
+  'Deoghar': { division: 'Santhal Pargana', hq: 'Deoghar', center: [24.4826, 86.6974], hindi: 'देवघर', densityTier: 'High' },
+  'Dumka': { division: 'Santhal Pargana', hq: 'Dumka', center: [24.2678, 87.2494], hindi: 'दुमका', densityTier: 'Medium' },
+  'Godda': { division: 'Santhal Pargana', hq: 'Godda', center: [24.8291, 87.2120], hindi: 'गोड्डा', densityTier: 'Medium' },
+  'Sahibganj': { division: 'Santhal Pargana', hq: 'Sahibganj', center: [25.2425, 87.6433], hindi: 'साहिबगंज', densityTier: 'High' },
+  'Pakur': { division: 'Santhal Pargana', hq: 'Pakur', center: [24.6334, 87.8491], hindi: 'पाकुड़', densityTier: 'Low' },
+  'Jamtara': { division: 'Santhal Pargana', hq: 'Jamtara', center: [23.9592, 86.8047], hindi: 'जामताड़ा', densityTier: 'Medium' },
+};
 
-  // ── NORTH CHOTANAGPUR DIVISION (North-Central & Coal Belt) ──
-  {
-    id: 'chatra',
-    name: 'Chatra',
-    division: 'North Chotanagpur',
-    center: [210, 115],
-    path: 'M 160,70 L 245,65 L 260,120 L 230,165 L 175,130 Z',
-  },
-  {
-    id: 'koderma',
-    name: 'Koderma',
-    division: 'North Chotanagpur',
-    center: [285, 80],
-    path: 'M 245,65 L 320,60 L 335,105 L 260,120 Z',
-  },
-  {
-    id: 'hazaribagh',
-    name: 'Hazaribagh',
-    division: 'North Chotanagpur',
-    center: [265, 160],
-    path: 'M 230,165 L 260,120 L 335,105 L 340,160 L 305,200 L 235,195 Z',
-  },
-  {
-    id: 'giridih',
-    name: 'Giridih',
-    division: 'North Chotanagpur',
-    center: [375, 120],
-    path: 'M 320,60 L 420,70 L 440,140 L 380,175 L 335,105 Z',
-  },
-  {
-    id: 'ramgarh',
-    name: 'Ramgarh',
-    division: 'North Chotanagpur',
-    center: [280, 225],
-    path: 'M 235,195 L 305,200 L 325,235 L 265,255 L 225,230 Z',
-  },
-  {
-    id: 'bokaro',
-    name: 'Bokaro',
-    division: 'North Chotanagpur',
-    center: [360, 205],
-    path: 'M 305,200 L 380,175 L 420,200 L 395,245 L 325,235 Z',
-  },
-  {
-    id: 'dhanbad',
-    name: 'Dhanbad',
-    division: 'North Chotanagpur',
-    center: [435, 195],
-    path: 'M 380,175 L 460,165 L 485,210 L 420,225 L 420,200 Z',
-  },
-
-  // ── SANTHAL PARGANA DIVISION (North-East) ──
-  {
-    id: 'deoghar',
-    name: 'Deoghar',
-    division: 'Santhal Pargana',
-    center: [450, 110],
-    path: 'M 420,70 L 480,80 L 490,145 L 440,140 Z',
-  },
-  {
-    id: 'dumka',
-    name: 'Dumka',
-    division: 'Santhal Pargana',
-    center: [520, 140],
-    path: 'M 480,80 L 550,90 L 565,160 L 515,185 L 460,165 L 490,145 Z',
-  },
-  {
-    id: 'jamtara',
-    name: 'Jamtara',
-    division: 'Santhal Pargana',
-    center: [485, 195],
-    path: 'M 460,165 L 515,185 L 505,225 L 465,220 Z',
-  },
-  {
-    id: 'godda',
-    name: 'Godda',
-    division: 'Santhal Pargana',
-    center: [550, 85],
-    path: 'M 515,40 L 585,55 L 590,115 L 550,90 Z',
-  },
-  {
-    id: 'sahibganj',
-    name: 'Sahibganj',
-    division: 'Santhal Pargana',
-    center: [610, 60],
-    path: 'M 585,55 L 645,45 L 655,95 L 605,105 L 590,115 Z',
-  },
-  {
-    id: 'pakur',
-    name: 'Pakur',
-    division: 'Santhal Pargana',
-    center: [600, 140],
-    path: 'M 590,115 L 605,105 L 645,130 L 630,175 L 565,160 Z',
-  },
-
-  // ── SOUTH CHOTANAGPUR DIVISION (Central & South-West) ──
-  {
-    id: 'lohardaga',
-    name: 'Lohardaga',
-    division: 'South Chotanagpur',
-    center: [170, 260],
-    path: 'M 140,230 L 195,230 L 205,280 L 145,285 Z',
-  },
-  {
-    id: 'ranchi',
-    name: 'Ranchi',
-    division: 'South Chotanagpur',
-    center: [260, 285],
-    path: 'M 195,230 L 265,255 L 335,270 L 320,330 L 235,335 L 205,280 Z',
-  },
-  {
-    id: 'gumla',
-    name: 'Gumla',
-    division: 'South Chotanagpur',
-    center: [135, 335],
-    path: 'M 120,240 L 145,285 L 200,320 L 175,395 L 90,360 L 95,290 Z',
-  },
-  {
-    id: 'simdega',
-    name: 'Simdega',
-    division: 'South Chotanagpur',
-    center: [150, 425],
-    path: 'M 90,360 L 175,395 L 210,410 L 180,470 L 105,455 Z',
-  },
-  {
-    id: 'khunti',
-    name: 'Khunti',
-    division: 'South Chotanagpur',
-    center: [265, 360],
-    path: 'M 235,335 L 320,330 L 310,385 L 230,385 L 200,320 Z',
-  },
-
-  // ── KOLHAN DIVISION (South-East) ──
-  {
-    id: 'seraikela',
-    name: 'Seraikela Kharsawan',
-    division: 'Kolhan',
-    center: [375, 345],
-    path: 'M 320,330 L 395,285 L 435,325 L 400,380 L 325,370 Z',
-  },
-  {
-    id: 'east_singhbhum',
-    name: 'East Singhbhum',
-    division: 'Kolhan',
-    center: [465, 350],
-    path: 'M 435,325 L 515,310 L 530,375 L 470,410 L 420,380 Z',
-  },
-  {
-    id: 'west_singhbhum',
-    name: 'West Singhbhum',
-    division: 'Kolhan',
-    center: [305, 425],
-    path: 'M 230,385 L 310,385 L 400,380 L 395,445 L 290,475 L 210,410 Z',
-  },
+/* Known Critical Hotspot Nodes across Jharkhand */
+const INCIDENT_HOTSPOTS: Array<{ id: string; name: string; district: string; coords: [number, number]; intensity: number; domain: string }> = [
+  { id: 'h1', name: 'Jharia Underground Mine Fire Corridor', district: 'Dhanbad', coords: [23.7420, 86.4150], intensity: 0.98, domain: 'Environment & Coal' },
+  { id: 'h2', name: 'Dhurwa Dam Infiltration Sector', district: 'Ranchi', coords: [23.3100, 85.2800], intensity: 0.92, domain: 'Water Supply' },
+  { id: 'h3', name: 'Kadma Industrial Heavy Effluent Node', district: 'East Singhbhum', coords: [22.7800, 86.1600], intensity: 0.95, domain: 'Industrial Pollution' },
+  { id: 'h4', name: 'Ganga Bank Arsenic Intrusion Belt', district: 'Sahibganj', coords: [25.2300, 87.6200], intensity: 0.88, domain: 'Groundwater Arsenic' },
+  { id: 'h5', name: 'Deoghar Temple Pilgrim Access Arterial', district: 'Deoghar', coords: [24.4900, 86.7000], intensity: 0.84, domain: 'Urban Congestion' },
+  { id: 'h6', name: 'Koel-Karo Drought Agritech Sector', district: 'Palamu', coords: [24.0800, 84.1100], intensity: 0.82, domain: 'Drought & Irrigation' },
+  { id: 'h7', name: 'Bokaro Thermal Ash Disposal Pond', district: 'Bokaro', coords: [23.7800, 85.8500], intensity: 0.79, domain: 'Fly Ash Contamination' },
+  { id: 'h8', name: 'Chaibasa Iron Ore Haulage Grid', district: 'West Singhbhum', coords: [22.5600, 85.8300], intensity: 0.76, domain: 'Road Infrastructure' },
+  { id: 'h9', name: 'Giridih Parasnath Eco-Vulnerable Buffer', district: 'Giridih', coords: [23.9600, 86.1300], intensity: 0.74, domain: 'Forest Depletion' },
+  { id: 'h10', name: 'Netarhat Micro-Hydro Failure Node', district: 'Latehar', coords: [23.4800, 84.2600], intensity: 0.70, domain: 'Renewable Power' },
 ];
 
-const DIVISIONS = ['All Divisions', 'South Chotanagpur', 'North Chotanagpur', 'Kolhan', 'Santhal Pargana', 'Palamu'];
+/* Geographic Bounding Boxes for Smooth Fly-To Navigation */
+const DIVISION_BOUNDS: Record<string, L.LatLngBoundsExpression> = {
+  'All Divisions': [[21.8, 83.2], [25.4, 87.9]],
+  'Palamu': [[23.4, 83.3], [24.6, 84.9]],
+  'North Chotanagpur': [[23.4, 84.8], [24.7, 86.8]],
+  'South Chotanagpur': [[22.4, 84.1], [23.7, 85.9]],
+  'Kolhan': [[21.9, 85.0], [23.2, 86.9]],
+  'Santhal Pargana': [[23.8, 86.4], [25.4, 87.9]],
+};
+
+const DIVISIONS = [
+  'All Divisions',
+  'Palamu',
+  'North Chotanagpur',
+  'South Chotanagpur',
+  'Kolhan',
+  'Santhal Pargana',
+];
+
+const BASE_TILES = {
+  positron: {
+    name: 'Carto Positron (Command Light)',
+    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap',
+  },
+  dark: {
+    name: 'Dark Matter (War Room Dark)',
+    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap',
+  },
+  satellite: {
+    name: 'Satellite Hybrid (Tactical Aerial)',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP',
+  },
+  osm: {
+    name: 'OpenStreetMap (Civil Infrastructure)',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; OpenStreetMap contributors',
+  },
+};
+
+/* ─────────────────────────────────────────────────────────
+   Map Controller Component (Handles camera movements)
+   ───────────────────────────────────────────────────────── */
+
+function MapController({
+  activeDivision,
+  selectedDistrict,
+}: {
+  activeDivision: string;
+  selectedDistrict: DistrictGeoData | null;
+}) {
+  const map = useMap();
+
+  useMemo(() => {
+    if (!map) return;
+    if (selectedDistrict && DISTRICT_METADATA[selectedDistrict.name]) {
+      const meta = DISTRICT_METADATA[selectedDistrict.name]!;
+      map.flyTo(meta.center, 9.2, { duration: 1.1 });
+    } else if (activeDivision && DIVISION_BOUNDS[activeDivision]) {
+      const bounds = DIVISION_BOUNDS[activeDivision]!;
+      map.flyToBounds(bounds, { padding: [25, 25], duration: 1.1 });
+    }
+  }, [map, activeDivision, selectedDistrict]);
+
+  return null;
+}
+
+/* ─────────────────────────────────────────────────────────
+   Main Component
+   ───────────────────────────────────────────────────────── */
 
 export default function JharkhandMap({
   districts,
@@ -213,230 +156,436 @@ export default function JharkhandMap({
   onSelectDistrict,
 }: JharkhandMapProps) {
   const [activeDivision, setActiveDivision] = useState('All Divisions');
-  const [hoveredDistrict, setHoveredDistrict] = useState<DistrictGeoData | null>(null);
-  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const [baseLayerKey, setBaseLayerKey] = useState<keyof typeof BASE_TILES>('positron');
+  const [viewMode, setViewMode] = useState<'choropleth' | 'hotspots'>('choropleth');
+  const [hoveredDistrictName, setHoveredDistrictName] = useState<string | null>(null);
 
-  // Map district data by name
-  const districtMap = useMemo(() => {
+  /* Lookup Map for Fast Matching by normalized name */
+  const districtLookup = useMemo(() => {
     const map = new Map<string, DistrictGeoData>();
     districts.forEach((d) => {
-      map.set(d.name.toLowerCase().trim(), d);
+      const norm = d.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+      map.set(norm, d);
     });
     return map;
   }, [districts]);
 
-  // Color generator based on intensity
-  const getHeatColor = (total: number, isSelected: boolean, isHovered: boolean) => {
-    if (isSelected) return '#1E3A8A'; // Deep Navy highlight
-    if (isHovered) return '#F59E0B'; // Vibrant Amber on hover
+  /* Helper to get clean telemetry for any district name */
+  const getDistrictTelemetry = useCallback(
+    (rawName: string): DistrictGeoData => {
+      const norm = rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const found = districtLookup.get(norm);
+      if (found) return found;
 
-    if (total >= 280) return '#DC2626'; // Red - Critical
-    if (total >= 200) return '#EA580C'; // Orange - High
-    if (total >= 140) return '#D97706'; // Turmeric - Medium
-    if (total >= 80) return '#0D9488'; // Teal - Low
-    return '#059669'; // Green - Stable
-  };
+      // Fuzzy normalization fallbacks
+      if (norm.includes('koderma') || norm.includes('kodarma')) return districtLookup.get('koderma') || districtLookup.get('kodarma') || { name: 'Koderma', total: 110, breakdown: {} };
+      if (norm.includes('sahibganj') || norm.includes('sahebganj')) return districtLookup.get('sahibganj') || districtLookup.get('sahebganj') || { name: 'Sahibganj', total: 215, breakdown: {} };
+      if (norm.includes('seraikela')) return districtLookup.get('seraikelakharsawan') || districtLookup.get('seraikela') || { name: 'Seraikela-Kharsawan', total: 160, breakdown: {} };
+      if (norm.includes('eastsingh')) return districtLookup.get('eastsinghbhum') || districtLookup.get('eastsinghbum') || { name: 'East Singhbhum', total: 290, breakdown: {} };
+      if (norm.includes('westsingh')) return districtLookup.get('westsinghbhum') || districtLookup.get('westsinghbum') || { name: 'West Singhbhum', total: 195, breakdown: {} };
+
+      return {
+        name: rawName,
+        total: 125,
+        breakdown: { 'Water Supply': 42, 'Roads & Works': 38, 'Power': 25, 'Agritech': 20 },
+      };
+    },
+    [districtLookup]
+  );
+
+  /* Color calculation based on grievance density */
+  const getDistrictColor = useCallback(
+    (rawName: string, isSelected: boolean, isHovered: boolean) => {
+      if (isSelected) return '#1E3A8A'; // Deep Imperial Navy
+      if (isHovered) return '#F59E0B'; // Vibrant Golden Amber on hover
+
+      const data = getDistrictTelemetry(rawName);
+      const total = data.total;
+
+      if (total >= 280) return '#DC2626'; // Red - Critical
+      if (total >= 200) return '#EA580C'; // Orange - Severe
+      if (total >= 140) return '#D97706'; // Turmeric - High
+      if (total >= 80) return '#0D9488'; // Teal - Moderate
+      return '#059669'; // Emerald - Stable
+    },
+    [getDistrictTelemetry]
+  );
+
+  /* GeoJSON Polygon Styling */
+  const geoJsonStyle = useCallback(
+    (feature: GeoJSON.Feature | undefined): PathOptions => {
+      if (!feature || !feature.properties) return {};
+      const name: string = feature.properties.name || feature.properties.official_name || '';
+      const meta = DISTRICT_METADATA[name] || DISTRICT_METADATA[feature.properties.official_name];
+      const isSelected = selectedDistrict.name.toLowerCase() === name.toLowerCase();
+      const isHovered = hoveredDistrictName === name;
+      const isDimmed = activeDivision !== 'All Divisions' && meta && meta.division !== activeDivision;
+
+      const fillColor = getDistrictColor(name, isSelected, isHovered);
+
+      return {
+        fillColor,
+        weight: isSelected ? 3.5 : isHovered ? 2.5 : 1.2,
+        opacity: isDimmed ? 0.35 : 1,
+        color: isSelected ? '#1E3A8A' : isHovered ? '#B45309' : '#334155',
+        dashArray: isSelected ? '' : '1',
+        fillOpacity: isDimmed ? 0.15 : isSelected ? 0.85 : isHovered ? 0.8 : 0.65,
+      };
+    },
+    [selectedDistrict.name, hoveredDistrictName, activeDivision, getDistrictColor]
+  );
+
+  /* Feature Event Handlers (Click, Hover) */
+  const onEachFeature = useCallback(
+    (feature: GeoJSON.Feature, layer: Layer) => {
+      const name: string = feature.properties?.name || feature.properties?.official_name || 'Jharkhand District';
+      const meta = DISTRICT_METADATA[name] || {
+        division: 'Jharkhand State',
+        hq: name,
+        center: [23.6, 85.3] as [number, number],
+        hindi: feature.properties?.name_hi || name,
+        densityTier: 'Medium' as const,
+      };
+      const tele = getDistrictTelemetry(name);
+
+      layer.on({
+        mouseover: (e: LeafletMouseEvent) => {
+          setHoveredDistrictName(name);
+          const target = e.target;
+          target.setStyle({
+            weight: 2.8,
+            color: '#D97706',
+            fillOpacity: 0.82,
+          });
+          if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+            target.bringToFront();
+          }
+        },
+        mouseout: (e: LeafletMouseEvent) => {
+          setHoveredDistrictName(null);
+          const target = e.target;
+          const isSelected = selectedDistrict.name.toLowerCase() === name.toLowerCase();
+          const fillColor = getDistrictColor(name, isSelected, false);
+          target.setStyle({
+            weight: isSelected ? 3.5 : 1.2,
+            color: isSelected ? '#1E3A8A' : '#334155',
+            fillColor,
+            fillOpacity: isSelected ? 0.85 : 0.65,
+          });
+        },
+        click: () => {
+          onSelectDistrict(tele);
+        },
+      });
+
+      // Bind rich hover tooltip
+      const tooltipHtml = `
+        <div style="font-family: ui-sans-serif, system-ui, sans-serif; padding: 4px 6px; min-width: 170px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #E2E8F0; padding-bottom: 4px; margin-bottom: 5px;">
+            <div>
+              <span style="font-size: 13px; font-weight: 700; color: #0F172A;">${name}</span>
+              <span style="font-size: 11px; color: #64748B; margin-left: 4px;">(${meta.hindi})</span>
+            </div>
+            <span style="font-size: 9px; font-weight: 800; text-transform: uppercase; background: #EEF2F6; color: #1E3A8A; padding: 1px 4px; border-radius: 2px;">${meta.division}</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 6px; font-size: 11px;">
+            <div style="background: #F8FAFC; padding: 3px 5px; border-radius: 2px;">
+              <div style="color: #64748B; font-size: 9px; text-transform: uppercase;">Total Cases</div>
+              <div style="font-weight: 800; color: #0F172A; font-family: monospace;">${tele.total}</div>
+            </div>
+            <div style="background: #FEF2F2; padding: 3px 5px; border-radius: 2px;">
+              <div style="color: #991B1B; font-size: 9px; text-transform: uppercase;">Critical Tier</div>
+              <div style="font-weight: 800; color: #DC2626; font-family: monospace;">${Math.round(tele.total * 0.32)}</div>
+            </div>
+          </div>
+          <div style="font-size: 10px; color: #475569; display: flex; align-items: center; justify-content: space-between;">
+            <span>Headquarters:</span>
+            <span style="font-weight: 600; color: #0F172A;">${meta.hq}</span>
+          </div>
+          <div style="margin-top: 5px; font-size: 9px; color: #1E3A8A; text-align: center; font-weight: 600; border-top: 1px dashed #CBD5E1; padding-top: 3px;">
+            Click to filter Statewide Command HUD
+          </div>
+        </div>
+      `;
+
+      layer.bindTooltip(tooltipHtml, {
+        sticky: true,
+        direction: 'auto',
+        className: 'custom-leaflet-tooltip',
+      });
+    },
+    [getDistrictTelemetry, onSelectDistrict, selectedDistrict.name, getDistrictColor]
+  );
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-[2px] border border-border p-4 relative select-none">
-      {/* Map Control Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-border">
+    <div className="flex flex-col h-full bg-white rounded-[2px] border border-border shadow-xs overflow-hidden relative select-none">
+      {/* ── MAP COMMAND CONTROL BAR ── */}
+      <div className="p-3 bg-paper/60 border-b border-border flex flex-wrap items-center justify-between gap-2.5 z-10">
         <div>
-          <div className="flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-turmeric-deep text-lg">public</span>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-ink font-mono">
-              Jharkhand Geospatial Command Map
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-turmeric-deep text-xl">map</span>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-ink font-mono flex items-center gap-1.5">
+              <span>Jharkhand GIS Command Center</span>
+              <span className="px-1.5 py-0.2 bg-forest/10 text-forest border border-forest/20 text-[9px] font-bold rounded-[2px]">
+                24 Districts Live
+              </span>
             </h3>
           </div>
           <p className="text-[11px] text-ink-muted mt-0.5">
-            Real-time choropleth telemetry across 24 administrative districts
+            Real-time geospatial vector choropleth and incident cluster intelligence
           </p>
         </div>
 
-        {/* Division Selector */}
-        <div className="flex items-center gap-1 bg-paper p-1 rounded-[3px] border border-border text-[11px]">
-          {DIVISIONS.map((div) => (
+        {/* Action Controls */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Mode Switcher */}
+          <div className="flex items-center bg-white border border-border rounded-[2px] p-0.5 text-xs shadow-2xs">
             <button
-              key={div}
               type="button"
-              onClick={() => setActiveDivision(div)}
-              className={`px-2 py-1 rounded-[2px] font-medium transition-colors ${
-                activeDivision === div
-                  ? 'bg-navy text-white shadow-xs font-bold'
-                  : 'text-ink-muted hover:text-navy hover:bg-white'
+              onClick={() => setViewMode('choropleth')}
+              className={`px-2.5 py-1 text-[11px] font-semibold rounded-[2px] transition flex items-center gap-1 cursor-pointer ${
+                viewMode === 'choropleth'
+                  ? 'bg-navy text-white shadow-xs'
+                  : 'text-ink-muted hover:text-ink'
               }`}
             >
-              {div === 'All Divisions' ? 'All (24)' : div.replace(' Chotanagpur', ' CN')}
+              <span className="material-symbols-outlined text-xs">grid_view</span>
+              <span>Choropleth Heat</span>
             </button>
-          ))}
+            <button
+              type="button"
+              onClick={() => setViewMode('hotspots')}
+              className={`px-2.5 py-1 text-[11px] font-semibold rounded-[2px] transition flex items-center gap-1 cursor-pointer ${
+                viewMode === 'hotspots'
+                  ? 'bg-navy text-white shadow-xs'
+                  : 'text-ink-muted hover:text-ink'
+              }`}
+            >
+              <span className="material-symbols-outlined text-xs text-urgent">radar</span>
+              <span>Incident Hotspots</span>
+            </button>
+          </div>
+
+          {/* Base Tile Selector */}
+          <select
+            value={baseLayerKey}
+            onChange={(e) => setBaseLayerKey(e.target.value as keyof typeof BASE_TILES)}
+            aria-label="Select Base Map Tile Layer"
+            className="text-[11px] font-medium bg-white border border-border rounded-[2px] px-2 py-1 text-ink focus:outline-none focus:border-navy cursor-pointer"
+          >
+            <option value="positron">🗺️ Carto Positron (Command)</option>
+            <option value="dark">🌑 Dark Matter (War Room)</option>
+            <option value="satellite">🛰️ Satellite Hybrid</option>
+            <option value="osm">🏛️ OpenStreetMap</option>
+          </select>
+
+          {/* Reset View Button */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveDivision('All Divisions');
+              onSelectDistrict({
+                name: 'Ranchi',
+                total: 312,
+                critical: 128,
+                division: 'South Chotanagpur',
+                breakdown: { 'Water Supply': 94, 'Urban Roads': 82, 'Power Distribution': 65, 'Healthcare': 45, 'Agritech': 26 },
+              });
+            }}
+            title="Reset to Full Jharkhand State Bounds"
+            className="px-2 py-1 bg-white hover:bg-paper text-ink-muted hover:text-navy border border-border rounded-[2px] text-[11px] font-bold transition flex items-center gap-1 cursor-pointer shadow-2xs"
+          >
+            <span className="material-symbols-outlined text-xs">restart_alt</span>
+            <span>Reset</span>
+          </button>
         </div>
       </div>
 
-      {/* SVG Canvas */}
-      <div className="relative flex-1 flex items-center justify-center p-2 min-h-[380px] overflow-hidden">
-        <svg
-          viewBox="0 0 660 480"
-          className="w-full h-full max-h-[440px] drop-shadow-sm transition-all"
-        >
-          {/* Subtle State Grid / Latitude-Longitude lines */}
-          <defs>
-            <pattern id="stateGrid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#E2E8F0" strokeWidth="0.5" />
-            </pattern>
-            <filter id="mapGlow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.15" />
-            </filter>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#stateGrid)" opacity="0.4" />
-
-          {/* District Polygons */}
-          <g filter="url(#mapGlow)">
-            {DISTRICT_PATHS.map((item) => {
-              const matched = districtMap.get(item.name.toLowerCase().trim()) || {
-                name: item.name,
-                total: 120,
-                breakdown: {},
-              };
-              const isSelected = selectedDistrict.name.toLowerCase() === item.name.toLowerCase();
-              const isHovered = hoveredDistrict?.name.toLowerCase() === item.name.toLowerCase();
-              const fillColor = getHeatColor(matched.total, isSelected, isHovered);
-              const isDimmed = activeDivision !== 'All Divisions' && item.division !== activeDivision;
-
-              return (
-                <g
-                  key={item.id}
-                  className="cursor-pointer transition-all duration-200"
-                  opacity={isDimmed ? 0.25 : 1}
-                  onClick={() => onSelectDistrict(matched)}
-                  onMouseEnter={(e) => {
-                    setHoveredDistrict(matched);
-                    setTooltipPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  onMouseMove={(e) => {
-                    setTooltipPos({ x: e.clientX, y: e.clientY });
-                  }}
-                  onMouseLeave={() => setHoveredDistrict(null)}
-                >
-                  <path
-                    d={item.path}
-                    fill={fillColor}
-                    fillOpacity={isSelected ? 0.95 : isHovered ? 0.9 : 0.75}
-                    stroke={isSelected ? '#0F172A' : '#FFFFFF'}
-                    strokeWidth={isSelected ? '2.5' : '1.5'}
-                    strokeLinejoin="round"
-                    className="hover:scale-[1.01] origin-center transition-transform"
-                  />
-
-                  {/* District Center Pin / Indicator */}
-                  <circle
-                    cx={item.center[0]}
-                    cy={item.center[1] - 4}
-                    r={isSelected ? 3.5 : 2}
-                    fill={isSelected ? '#F59E0B' : '#FFFFFF'}
-                  />
-
-                  {/* District Name Label */}
-                  <text
-                    x={item.center[0]}
-                    y={item.center[1] + 8}
-                    textAnchor="middle"
-                    fill={isSelected || isHovered ? '#FFFFFF' : '#0F172A'}
-                    fontSize={isSelected ? '10px' : '8.5px'}
-                    fontWeight={isSelected ? 'bold' : '600'}
-                    fontFamily="monospace"
-                    className="pointer-events-none select-none drop-shadow-sm"
-                  >
-                    {item.name}
-                  </text>
-
-                  {/* District Count Badge */}
-                  <text
-                    x={item.center[0]}
-                    y={item.center[1] + 18}
-                    textAnchor="middle"
-                    fill={isSelected || isHovered ? '#FEF08A' : '#334155'}
-                    fontSize="7.5px"
-                    fontWeight="bold"
-                    fontFamily="monospace"
-                    className="pointer-events-none select-none"
-                  >
-                    {matched.total}
-                  </text>
-                </g>
-              );
-            })}
-          </g>
-        </svg>
-
-        {/* Hover Telemetry Floating Tooltip */}
-        {hoveredDistrict && (
-          <div
-            className="fixed z-50 pointer-events-none bg-navy-deep text-white text-xs p-2.5 rounded-[3px] border border-turmeric shadow-xl min-w-[170px]"
-            style={{
-              left: `${tooltipPos.x + 15}px`,
-              top: `${tooltipPos.y - 45}px`,
-            }}
+      {/* ── DIVISION QUICK FOCUS BAR ── */}
+      <div className="px-3 py-1.5 bg-paper/30 border-b border-border flex items-center gap-1.5 overflow-x-auto text-[11px] z-10 scrollbar-none">
+        <span className="text-[10px] font-mono uppercase font-bold text-ink-muted shrink-0 mr-1 flex items-center gap-1">
+          <span className="material-symbols-outlined text-xs text-navy">explore</span>
+          <span>Focus:</span>
+        </span>
+        {DIVISIONS.map((div) => (
+          <button
+            key={div}
+            type="button"
+            onClick={() => setActiveDivision(div)}
+            className={`px-2 py-0.5 rounded-[2px] font-medium text-[11px] shrink-0 transition-colors cursor-pointer ${
+              activeDivision === div
+                ? 'bg-navy text-white font-bold shadow-2xs'
+                : 'text-ink-muted hover:text-navy hover:bg-white border border-transparent hover:border-border'
+            }`}
           >
-            <div className="flex items-center justify-between border-b border-white/20 pb-1 mb-1.5 font-bold font-mono">
-              <span className="text-turmeric">{hoveredDistrict.name}</span>
-              <span className="bg-white/10 px-1 py-0.5 rounded text-[10px]">
-                {hoveredDistrict.total} Issues
+            {div === 'All Divisions' ? 'Statewide (24)' : div.replace(' Chotanagpur', ' CN')}
+          </button>
+        ))}
+      </div>
+
+      {/* ── LEAFLET GIS MAP CONTAINER ── */}
+      <div className="relative flex-1 min-h-[480px] w-full bg-[#F1F5F9]">
+        <MapContainer
+          center={[23.6102, 85.2799]}
+          zoom={7.8}
+          minZoom={7.0}
+          maxZoom={12}
+          maxBounds={[
+            [21.5, 82.5],
+            [25.8, 88.5],
+          ]}
+          scrollWheelZoom={true}
+          attributionControl={false}
+          className="w-full h-full z-0"
+        >
+          {/* Base Layer */}
+          <TileLayer
+            url={BASE_TILES[baseLayerKey].url}
+            attribution={BASE_TILES[baseLayerKey].attribution}
+          />
+
+          {/* Camera Controller */}
+          <MapController activeDivision={activeDivision} selectedDistrict={selectedDistrict} />
+
+          {/* 24-District GeoJSON Boundary Layer */}
+          <GeoJSON
+            key={`${baseLayerKey}-${activeDivision}-${selectedDistrict.name}-${viewMode}`}
+            data={jharkhandDistrictsGeoJson}
+            style={geoJsonStyle}
+            onEachFeature={onEachFeature}
+          />
+
+          {/* Incident Density Heatmap Layer Mode */}
+          {viewMode === 'hotspots' && (
+            <>
+              {INCIDENT_HOTSPOTS.map((spot) => (
+                <div key={spot.id}>
+                  {/* Outer Heat Halo */}
+                  <CircleMarker
+                    center={spot.coords}
+                    radius={32 * spot.intensity}
+                    pathOptions={{
+                      fillColor: '#DC2626',
+                      fillOpacity: 0.22,
+                      stroke: false,
+                    }}
+                  />
+                  {/* Mid Heat Pulse */}
+                  <CircleMarker
+                    center={spot.coords}
+                    radius={18 * spot.intensity}
+                    pathOptions={{
+                      fillColor: '#EA580C',
+                      fillOpacity: 0.5,
+                      stroke: false,
+                    }}
+                  />
+                  {/* Core Hotspot Dot */}
+                  <CircleMarker
+                    center={spot.coords}
+                    radius={6}
+                    pathOptions={{
+                      fillColor: '#FEF08A',
+                      fillOpacity: 1,
+                      color: '#DC2626',
+                      weight: 2,
+                    }}
+                  >
+                    <Tooltip direction="top" offset={[0, -8]} opacity={0.95}>
+                      <div className="text-xs p-1">
+                        <div className="font-bold text-ink">{spot.name}</div>
+                        <div className="text-[10px] text-urgent font-mono font-semibold">
+                          Domain: {spot.domain}
+                        </div>
+                        <div className="text-[10px] text-ink-muted mt-0.5">
+                          District: {spot.district} · Severity: {Math.round(spot.intensity * 100)}%
+                        </div>
+                      </div>
+                    </Tooltip>
+                  </CircleMarker>
+                </div>
+              ))}
+            </>
+          )}
+        </MapContainer>
+
+        {/* ── FLOATING HUD: SELECTED DISTRICT TELEMETRY OVERLAY ── */}
+        <div className="absolute top-3 left-3 z-[400] max-w-xs bg-white/95 backdrop-blur-md p-3 rounded-[3px] border border-border shadow-md pointer-events-auto">
+          <div className="flex items-start justify-between gap-2 pb-2 border-b border-border">
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-forest animate-pulse" />
+                <h4 className="text-xs font-bold text-ink font-mono uppercase tracking-wide">
+                  {selectedDistrict.name} District
+                </h4>
+                {DISTRICT_METADATA[selectedDistrict.name] && (
+                  <span className="text-[10px] text-ink-muted">
+                    ({DISTRICT_METADATA[selectedDistrict.name]!.hindi})
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] text-ink-muted font-mono mt-0.5">
+                {selectedDistrict.division || DISTRICT_METADATA[selectedDistrict.name]?.division || 'Jharkhand State'} Division
+              </p>
+            </div>
+            <span className="px-1.5 py-0.5 bg-navy/10 text-navy font-mono font-bold text-[9px] rounded-[2px]">
+              HQ: {selectedDistrict.hq || DISTRICT_METADATA[selectedDistrict.name]?.hq || selectedDistrict.name}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 my-2.5">
+            <div className="p-1.5 bg-paper rounded-[2px] border border-border/80">
+              <span className="text-[9px] font-mono text-ink-muted block uppercase">Open Challenges</span>
+              <span className="text-sm font-mono font-bold text-ink">{selectedDistrict.total}</span>
+            </div>
+            <div className="p-1.5 bg-urgent/5 rounded-[2px] border border-urgent/20">
+              <span className="text-[9px] font-mono text-urgent block uppercase">Critical Priority</span>
+              <span className="text-sm font-mono font-bold text-urgent">
+                {selectedDistrict.critical || Math.round(selectedDistrict.total * 0.35)}
               </span>
             </div>
-            <div className="text-[10px] space-y-0.5 text-white/80">
-              <div className="flex justify-between">
-                <span>Distress Level:</span>
-                <span
-                  className={
-                    hoveredDistrict.total >= 250
-                      ? 'text-urgent font-bold'
-                      : hoveredDistrict.total >= 180
-                        ? 'text-turmeric font-bold'
-                        : 'text-forest font-bold'
-                  }
-                >
-                  {hoveredDistrict.total >= 250 ? 'CRITICAL' : hoveredDistrict.total >= 180 ? 'HIGH' : 'MODERATE'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Status:</span>
-                <span>Active Field Nodes</span>
-              </div>
-              <div className="pt-1 text-[9px] text-turmeric-light italic">
-                Click to drill into district case files →
-              </div>
-            </div>
           </div>
-        )}
-      </div>
 
-      {/* Heatmap Legend */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border text-[11px] text-ink-muted">
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-ink uppercase font-mono text-[10px]">Distress Heatmap:</span>
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1">
-              <span className="h-2.5 w-2.5 rounded-full bg-[#059669]"></span>
-              <span>Low (&lt;120)</span>
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="h-2.5 w-2.5 rounded-full bg-[#D97706]"></span>
-              <span>Moderate (120–199)</span>
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="h-2.5 w-2.5 rounded-full bg-[#EA580C]"></span>
-              <span>High (200–279)</span>
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="h-2.5 w-2.5 rounded-full bg-[#DC2626] animate-pulse"></span>
-              <span>Critical (280+)</span>
-            </span>
+          {/* Mini Sector Distribution Bar */}
+          <div className="space-y-1">
+            <span className="text-[9px] font-mono text-ink-muted block uppercase font-bold">Top Civic Domains</span>
+            <div className="h-1.5 w-full bg-paper rounded-full overflow-hidden flex">
+              <div style={{ width: '38%' }} className="bg-navy" title="Water Infrastructure (38%)" />
+              <div style={{ width: '30%' }} className="bg-turmeric" title="Roads & Transport (30%)" />
+              <div style={{ width: '20%' }} className="bg-forest" title="Agritech (20%)" />
+              <div style={{ width: '12%' }} className="bg-urgent" title="Healthcare & Energy (12%)" />
+            </div>
           </div>
         </div>
 
-        <div className="font-mono text-[10px] text-navy font-bold flex items-center gap-1">
-          <span className="material-symbols-outlined text-xs">touch_app</span>
-          <span>Click any district to filter Challenge Registry</span>
+        {/* ── FLOATING HUD: TELEMETRY COLOR LEGEND ── */}
+        <div className="absolute bottom-3 right-3 z-[400] bg-white/95 backdrop-blur-md px-3 py-2 rounded-[3px] border border-border shadow-md pointer-events-auto">
+          <div className="text-[10px] font-mono font-bold text-ink uppercase mb-1.5 flex items-center justify-between gap-3">
+            <span>Complaint Density Scale</span>
+            <span className="text-[9px] text-ink-muted font-normal">Per District</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-[10px] font-mono">
+            <div className="flex items-center gap-1">
+              <span className="w-2.5 h-2.5 rounded-[1px] bg-[#059669]" />
+              <span>&lt;80</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-2.5 h-2.5 rounded-[1px] bg-[#0D9488]" />
+              <span>80-139</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-2.5 h-2.5 rounded-[1px] bg-[#D97706]" />
+              <span>140-199</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-2.5 h-2.5 rounded-[1px] bg-[#EA580C]" />
+              <span>200-279</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-2.5 h-2.5 rounded-[1px] bg-[#DC2626]" />
+              <span>280+</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
