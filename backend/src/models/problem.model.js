@@ -55,6 +55,25 @@ const ProblemSchema = new mongoose.Schema(
       max: 1,
       default: null,
     },
+    duplicate_of: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Problem',
+      default: null,
+    },
+    duplicate_count: {
+      type: Number,
+      default: 0,
+    },
+    cluster_id: {
+      type: String,
+      default: null,
+    },
+    citizen_feedback: {
+      rating: { type: Number, min: 1, max: 5, default: null },
+      comments: { type: String, default: '' },
+      is_resolved: { type: Boolean, default: null },
+      verified_at: { type: Date, default: null },
+    },
   },
   {
     timestamps: {

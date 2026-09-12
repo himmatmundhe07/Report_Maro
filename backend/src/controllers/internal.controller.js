@@ -7,7 +7,7 @@ const AuditLog = require('../models/auditlog.model');
 const updateProblemAI = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { category, priority, confidence, status } = req.body;
+    const { category, priority, confidence, status, duplicate_of } = req.body;
 
     console.log(`🔑 [Internal] Updating problem ${id}`);
 
@@ -24,6 +24,20 @@ const updateProblemAI = async (req, res, next) => {
     if (category) problem.category = category;
     if (priority) problem.priority = priority;
     if (confidence) problem.ai_confidence = confidence;
+
+    // Link duplicate if found
+    if (duplicate_of) {
+      problem.duplicate_of = duplicate_of;
+      await Problem.findByIdAndUpdate(duplicate_of, {
+        $inc: { duplicate_count: 1 },
+        priority: 'high', // Elevate parent priority on repeated community reports
+      });
+      await AuditLog.create({
+        eventType: 'DUPLICATE_PROBLEM_LINKED',
+        payload: { problemId: problem._id, duplicateOf: duplicate_of },
+        source: 'ai_worker',
+      }).catch(err => console.error('AuditLog error:', err.message));
+    }
 
     // If status is 'verified', update and notify admin
     if (status === 'verified' && problem.status === 'submitted') {

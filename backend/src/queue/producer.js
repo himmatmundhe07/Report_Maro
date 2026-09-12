@@ -28,9 +28,11 @@ function getQueue() {
  * Add a job to the queue for AI processing
  * @param {string} problemId - The ID of the problem
  * @param {string} text - The problem description text
+ * @param {Array<string>} imageUrls - Cloudinary image URLs
+ * @param {object} location - { lat, lng, district }
  */
-const enqueueClassification = async (problemId, text) => {
-  await getQueue().add('classify', { problemId, text });
+const enqueueClassification = async (problemId, text, imageUrls = [], location = null) => {
+  await getQueue().add('classify', { problemId, text, imageUrls, location });
   console.log(`📤 [Queue] Job added for problem: ${problemId}`);
 };
 

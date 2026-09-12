@@ -187,6 +187,19 @@ const fundProject = async (req, res, next) => {
       link: `/projects/${project._id}`,
     });
 
+    // Generate official CSR compliance numbers
+    project.csr_reference = 'JH-CSR-' + Date.now().toString(36).toUpperCase();
+    project.csr_certificate_id = 'CSR-80G-' + Math.floor(100000 + Math.random() * 900000);
+    project.funding_tranches = [
+      {
+        tranche: 'Tranche 1 (30% Advance R&D)',
+        amount: Math.round(amount * 0.3),
+        percentage: 30,
+        status: 'released',
+        released_at: new Date(),
+      },
+    ];
+
     // Notify admin
     await Notification.create({
       userId: null,
@@ -218,9 +231,58 @@ const fundProject = async (req, res, next) => {
   }
 };
 
+// 📝 PUT /api/projects/:id/milestones/:idx - University updates milestone progress
+const updateMilestone = async (req, res, next) => {
+  try {
+    const { id, idx } = req.params;
+    const { done, proof_url, completion_notes } = req.body;
+
+    const project = await Project.findById(id);
+    if (!project) {
+      return res.status(404).json({ success: false, message: 'Project not found' });
+    }
+
+    const mIdx = parseInt(idx, 10);
+    if (isNaN(mIdx) || mIdx < 0 || mIdx >= project.milestones.length) {
+      return res.status(400).json({ success: false, message: 'Invalid milestone index' });
+    }
+
+    project.milestones[mIdx].done = done !== undefined ? done : true;
+    if (proof_url) project.milestones[mIdx].proof_url = proof_url;
+    if (completion_notes) project.milestones[mIdx].completion_notes = completion_notes;
+    if (project.milestones[mIdx].done) {
+      project.milestones[mIdx].completed_at = new Date();
+    }
+
+    // If all milestones completed, mark project completed & problem resolved
+    const allDone = project.milestones.every(m => m.done);
+    if (allDone) {
+      project.status = 'completed';
+      await Problem.findByIdAndUpdate(project.problem_id, { status: 'resolved' });
+    }
+
+    await project.save();
+
+    await AuditLog.create({
+      eventType: 'PROJECT_MILESTONE_UPDATED',
+      payload: { projectId: project._id, milestoneIdx: mIdx, done: project.milestones[mIdx].done },
+      source: 'university',
+    }).catch(err => console.error('AuditLog error:', err.message));
+
+    res.json({
+      success: true,
+      message: 'Milestone updated successfully',
+      data: project,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getProjects,
   getProjectById,
   submitProposal,
   fundProject,
+  updateMilestone,
 };

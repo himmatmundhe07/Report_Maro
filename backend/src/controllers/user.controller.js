@@ -24,6 +24,26 @@ const getUsers = async (req, res, next) => {
   }
 };
 
+// 📝 PATCH /api/users/:id/verify - Admin toggles user clearance
+const verifyUser = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { is_verified } = req.body;
+    const user = await User.findByIdAndUpdate(
+      id,
+      { is_verified: is_verified !== undefined ? is_verified : true },
+      { new: true }
+    ).select('-password_hash');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    res.json({ success: true, data: user });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getUsers,
+  verifyUser,
 };

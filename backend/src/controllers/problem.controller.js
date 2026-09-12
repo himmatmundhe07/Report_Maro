@@ -50,7 +50,7 @@ const createProblem = async (req, res, next) => {
     });
 
     // Enqueue for AI processing (Fire and forget)
-    await enqueueClassification(problem._id, description);
+    await enqueueClassification(problem._id, description, problem.image_urls, problem.location);
 
     // 202 Accepted - Processing in background
     res.status(202).json({
@@ -275,10 +275,48 @@ const getStats = async (req, res, next) => {
   }
 };
 
+// 📝 POST /api/problems/:id/feedback - Citizen resolution feedback
+const submitFeedback = async (req, res, next) => {
+  try {
+    const { rating, comments, is_resolved } = req.body;
+    const problem = await Problem.findById(req.params.id);
+    if (!problem) {
+      return res.status(404).json({ success: false, message: 'Problem not found' });
+    }
+
+    problem.citizen_feedback = {
+      rating: rating || 5,
+      comments: comments || '',
+      is_resolved: is_resolved !== undefined ? is_resolved : true,
+      verified_at: new Date(),
+    };
+
+    if (is_resolved) {
+      problem.status = 'resolved';
+    }
+    await problem.save();
+
+    await AuditLog.create({
+      eventType: 'CITIZEN_RESOLUTION_VERIFIED',
+      payload: { problemId: problem._id, rating, is_resolved },
+      source: 'citizen',
+    }).catch(err => console.error('AuditLog error:', err.message));
+
+    res.json({
+      success: true,
+      message: 'Resolution feedback recorded successfully',
+      data: problem,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createProblem,
   getProblems,
   getProblemById,
   assignProblem,
   getStats,
+  submitFeedback,
 };

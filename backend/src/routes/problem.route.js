@@ -6,6 +6,7 @@ const {
   getProblemById,
   assignProblem,
   getStats,
+  submitFeedback,
 } = require('../controllers/problem.controller');
 const authMiddleware = require('../middleware/auth.middleware');
 const rbacMiddleware = require('../middleware/rbac.middlewre');
@@ -26,8 +27,11 @@ router.post(
 router.get('/', authMiddleware, getProblems);
 router.get('/:id', authMiddleware, getProblemById);
 
-// Admin only
-router.put('/:id/assign',authMiddleware,rbacMiddleware(['admin']),assignProblem);
-router.get('/stats/dashboard',authMiddleware,rbacMiddleware(['admin']),getStats);
+// Admin & Government
+router.put('/:id/assign', authMiddleware, rbacMiddleware(['admin', 'government']), assignProblem);
+router.get('/stats/dashboard', authMiddleware, rbacMiddleware(['admin', 'government']), getStats);
+
+// Citizen Resolution Feedback
+router.post('/:id/feedback', authMiddleware, rbacMiddleware(['citizen', 'admin']), submitFeedback);
 
 module.exports = router;

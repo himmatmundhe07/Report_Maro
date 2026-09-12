@@ -17,6 +17,13 @@ const startServer = async () => {
     const redis = getRedisClient();
     console.log('✅ Redis initialized');
 
+    // 2.1 Start BullMQ AI Worker
+    try {
+      require('./queue/worker');
+    } catch (workerErr) {
+      console.warn('⚠️ [Worker] Worker auto-init warning:', workerErr.message);
+    }
+
     // 3. Start the server IMMEDIATELY
     // Wrapped in http.createServer so Socket.io can share the same port —
     // app.listen() alone can't attach a socket server to it afterwards.

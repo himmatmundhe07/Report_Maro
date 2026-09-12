@@ -39,11 +39,28 @@ const ProjectSchema = new mongoose.Schema(
           title: { type: String, required: true },
           dueDate: { type: Date, required: true },
           done: { type: Boolean, default: false },
+          proof_url: { type: String, default: '' },
+          completion_notes: { type: String, default: '' },
+          completed_at: { type: Date, default: null },
         },
       ],
       default: [],
     },
-    // ✅ Phase 6 Additions: Social Impact Metrics (Optional)
+    csr_reference: { type: String, default: '' },
+    csr_certificate_id: { type: String, default: '' },
+    funding_tranches: {
+      type: [
+        {
+          tranche: String,
+          amount: Number,
+          percentage: Number,
+          status: { type: String, default: 'released' },
+          released_at: { type: Date, default: Date.now },
+        },
+      ],
+      default: [],
+    },
+    // ✅ Social Impact Metrics
     people_impacted: { type: Number, default: null },
     villages_reached: { type: Number, default: null },
     patents_filed: { type: Number, default: 0 },
