@@ -664,12 +664,12 @@ export default function Register() {
         </div>
 
         {/* ROLE SELECTOR TABS (Only shown if NOT in citizen-only, university-only, or industry-only mode) */}
-        {!isCitizenOnly && !isUniversityOnly && !isIndustryOnly && (
+        {!isCitizenOnly && !isUniversityOnly && !isIndustryOnly && !isGovernmentOnly && (
           <div className="mb-6">
             <label className="block text-xs font-bold uppercase tracking-wider text-ink-muted mb-2 font-mono">
               Select Account Type / खाता प्रकार चुनें
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <button
                 type="button"
                 onClick={() => setRole('citizen')}
@@ -679,7 +679,10 @@ export default function Register() {
                     : 'bg-paper text-ink border-border hover:border-navy'
                 }`}
               >
-                <div className="text-sm mb-0.5">👥 Citizen</div>
+                <div className="text-sm mb-0.5 flex items-center justify-center gap-1">
+                  <span className="material-symbols-outlined text-base">groups</span>
+                  <span>Citizen</span>
+                </div>
                 <div className="text-[10px] font-normal opacity-85">
                   नागरिक / जन प्रतिनिधि
                 </div>
@@ -694,7 +697,10 @@ export default function Register() {
                     : 'bg-paper text-ink border-border hover:border-forest'
                 }`}
               >
-                <div className="text-sm mb-0.5">🎓 University</div>
+                <div className="text-sm mb-0.5 flex items-center justify-center gap-1">
+                  <span className="material-symbols-outlined text-base">school</span>
+                  <span>University</span>
+                </div>
                 <div className="text-[10px] font-normal opacity-85">
                   छात्र · संरक्षक · संस्थान
                 </div>
@@ -709,9 +715,95 @@ export default function Register() {
                     : 'bg-paper text-ink border-border hover:border-navy'
                 }`}
               >
-                <div className="text-sm mb-0.5">💼 Industry / CSR</div>
+                <div className="text-sm mb-0.5 flex items-center justify-center gap-1">
+                  <span className="material-symbols-outlined text-base">corporate_fare</span>
+                  <span>Industry / CSR</span>
+                </div>
                 <div className="text-[10px] font-normal opacity-85">
                   उद्योग / सीएसआर पार्टनर
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setRole('government')}
+                className={`p-3 text-xs font-bold rounded-[2px] border transition-colors text-center ${
+                  role === 'government'
+                    ? 'bg-navy text-white border-navy shadow-sm'
+                    : 'bg-paper text-ink border-border hover:border-navy'
+                }`}
+              >
+                <div className="text-sm mb-0.5 flex items-center justify-center gap-1">
+                  <span className="material-symbols-outlined text-base">account_balance</span>
+                  <span>Government</span>
+                </div>
+                <div className="text-[10px] font-normal opacity-85">
+                  शासकीय / नोडल अधिकारी
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* GOVERNMENT SPECIFIC SUB-ROLE TABS */}
+        {role === 'government' && (
+          <div className="mb-6 p-4 bg-paper-dark/60 border-2 border-turmeric-deep/50 rounded-[2px]">
+            <label className="block text-xs font-bold uppercase tracking-wider text-turmeric-deep mb-2 font-mono flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-sm">account_balance</span>
+              <span>Official Designation Level / पद संवर्ग चुनें</span>
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => setGovSubRole('state')}
+                className={`p-2.5 text-left rounded-[2px] border transition-colors ${
+                  govSubRole === 'state'
+                    ? 'bg-white border-turmeric-deep shadow-sm text-turmeric-deep'
+                    : 'bg-paper/80 border-border hover:border-turmeric-deep text-ink'
+                }`}
+              >
+                <div className="font-bold text-xs flex items-center gap-1">
+                  <span className="material-symbols-outlined text-sm">account_balance</span>
+                  <span>State Level</span>
+                </div>
+                <div className="text-[10px] text-ink-muted mt-0.5">
+                  Nodal Officer / State Secretariat
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setGovSubRole('district')}
+                className={`p-2.5 text-left rounded-[2px] border transition-colors ${
+                  govSubRole === 'district'
+                    ? 'bg-white border-turmeric-deep shadow-sm text-turmeric-deep'
+                    : 'bg-paper/80 border-border hover:border-turmeric-deep text-ink'
+                }`}
+              >
+                <div className="font-bold text-xs flex items-center gap-1">
+                  <span className="material-symbols-outlined text-sm">location_city</span>
+                  <span>District Administration</span>
+                </div>
+                <div className="text-[10px] text-ink-muted mt-0.5">
+                  DC / DM / Sub-Divisional Officer
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setGovSubRole('department')}
+                className={`p-2.5 text-left rounded-[2px] border transition-colors ${
+                  govSubRole === 'department'
+                    ? 'bg-white border-turmeric-deep shadow-sm text-turmeric-deep'
+                    : 'bg-paper/80 border-border hover:border-turmeric-deep text-ink'
+                }`}
+              >
+                <div className="font-bold text-xs flex items-center gap-1">
+                  <span className="material-symbols-outlined text-sm">domain</span>
+                  <span>Department Nodal</span>
+                </div>
+                <div className="text-[10px] text-ink-muted mt-0.5">
+                  Department Head / Director
                 </div>
               </button>
             </div>
@@ -721,8 +813,9 @@ export default function Register() {
         {/* UNIVERSITY SPECIFIC SUB-ROLE TABS */}
         {role === 'university' && (
           <div className="mb-6 p-4 bg-forest/10 border-2 border-forest/40 rounded-[2px]">
-            <label className="block text-xs font-bold uppercase tracking-wider text-forest mb-2 font-mono">
-              University Ecosystem Role / विश्वविद्यालय संवर्ग चुनें
+            <label className="block text-xs font-bold uppercase tracking-wider text-forest mb-2 font-mono flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-sm">school</span>
+              <span>University Ecosystem Role / विश्वविद्यालय संवर्ग चुनें</span>
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <button
@@ -735,7 +828,8 @@ export default function Register() {
                 }`}
               >
                 <div className="font-bold text-xs flex items-center gap-1">
-                  <span>👨‍🎓 Student Innovator</span>
+                  <span className="material-symbols-outlined text-sm">school</span>
+                  <span>Student Innovator</span>
                 </div>
                 <div className="text-[10px] text-ink-muted mt-0.5">
                   Undergrad / Postgrad Team Researcher
@@ -752,7 +846,8 @@ export default function Register() {
                 }`}
               >
                 <div className="font-bold text-xs flex items-center gap-1">
-                  <span>👨‍🏫 Faculty Mentor</span>
+                  <span className="material-symbols-outlined text-sm">supervisor_account</span>
+                  <span>Faculty Mentor</span>
                 </div>
                 <div className="text-[10px] text-ink-muted mt-0.5">
                   Professor / Guide / Principal Investigator
@@ -769,7 +864,8 @@ export default function Register() {
                 }`}
               >
                 <div className="font-bold text-xs flex items-center gap-1">
-                  <span>🏛️ Institution Node</span>
+                  <span className="material-symbols-outlined text-sm">account_balance</span>
+                  <span>Institution Node</span>
                 </div>
                 <div className="text-[10px] text-ink-muted mt-0.5">
                   Dean R&amp;D / Registrar / Nodal Officer
@@ -960,7 +1056,7 @@ export default function Register() {
                           disabled={isSavingDepts}
                           className="px-2.5 py-1 bg-forest text-white text-[11px] font-bold rounded-[2px] hover:bg-forest-deep transition-colors flex items-center gap-1 shadow-xs cursor-pointer"
                         >
-                          <span>💾</span>
+                          <span className="material-symbols-outlined text-sm">save</span>
                           <span>{isSavingDepts ? 'Saving…' : 'Save to MongoDB Now'}</span>
                         </button>
                       )}
@@ -1001,7 +1097,8 @@ export default function Register() {
                               key={idx}
                               className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white text-navy text-xs font-medium border border-border shadow-xs rounded-[2px]"
                             >
-                              <span>🏢 {dept}</span>
+                              <span className="material-symbols-outlined text-xs">domain</span>
+                              <span>{dept}</span>
                               <button
                                 type="button"
                                 onClick={() => handleRemoveDepartment(dept)}
@@ -1393,8 +1490,9 @@ export default function Register() {
                     <label className="block text-xs font-bold uppercase tracking-wider text-ink-muted">
                       Postal Pincode / पिन कोड <span className="text-urgent">*</span>
                     </label>
-                    <span className="text-[10px] text-forest font-mono">
-                      ⚡ Auto-fills District, Block &amp; Village Dropdowns via India Post
+                    <span className="text-[10px] text-forest font-mono flex items-center gap-0.5">
+                      <span className="material-symbols-outlined text-xs">bolt</span>
+                      <span>Auto-fills District, Block &amp; Village Dropdowns via India Post</span>
                     </span>
                   </div>
                   <div className="flex gap-2">
@@ -1500,7 +1598,7 @@ export default function Register() {
                         <optgroup label="── Localities from India Post PIN Lookup ──">
                           {localities.map((loc) => (
                             <option key={`po-${loc}`} value={loc}>
-                              📮 {loc}
+                              {loc}
                             </option>
                           ))}
                         </optgroup>
@@ -1508,7 +1606,7 @@ export default function Register() {
                           <optgroup label="── Official LGD Gram Panchayats ──">
                             {availableVillages.map((v) => (
                               <option key={`lgd-${v.code}`} value={v.name}>
-                                🏛️ {v.name} ({v.type})
+                                {v.name} ({v.type})
                               </option>
                             ))}
                           </optgroup>
@@ -1655,7 +1753,7 @@ export default function Register() {
                 onClick={() => setShowAllRoles(true)}
                 className="text-[11px] text-ink-muted hover:text-navy hover:underline transition-colors flex items-center gap-1 self-start sm:self-auto cursor-pointer font-medium whitespace-nowrap"
               >
-                <span>🌐</span>
+                <span className="material-symbols-outlined text-xs">language</span>
                 <span>Show All Portals</span>
               </button>
             )}

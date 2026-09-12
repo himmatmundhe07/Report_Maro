@@ -306,8 +306,9 @@ export default function Login() {
         {/* Redirect Notice for University */}
         {isUniversityRedirect && !isCitizenOnly && (
           <div className="mb-5 p-3 bg-forest/10 border border-forest/30 rounded-[2px] flex flex-col gap-1 text-xs text-forest">
-            <div className="flex items-start gap-1.5 font-bold">
-              <span>🏛️ University Access Required:</span>
+            <div className="flex items-center gap-1.5 font-bold">
+              <span className="material-symbols-outlined text-base">school</span>
+              <span>University Access Required:</span>
             </div>
             <span>
               {stateObj?.message || 'Please sign in with your University credential or use the 1-click University demo accounts below.'}
@@ -345,7 +346,7 @@ export default function Login() {
                     : 'text-ink-muted hover:text-navy hover:bg-white/60'
                 }`}
               >
-                <span className="text-sm">👥</span>
+                <span className="material-symbols-outlined text-lg">groups</span>
                 <span className="text-[11px]">Citizen</span>
               </button>
 
@@ -358,7 +359,7 @@ export default function Login() {
                     : 'text-ink-muted hover:text-navy hover:bg-white/60'
                 }`}
               >
-                <span className="text-sm">🎓</span>
+                <span className="material-symbols-outlined text-lg">school</span>
                 <span className="text-[11px]">University</span>
               </button>
 
@@ -371,7 +372,7 @@ export default function Login() {
                     : 'text-ink-muted hover:text-navy hover:bg-white/60'
                 }`}
               >
-                <span className="text-sm">💼</span>
+                <span className="material-symbols-outlined text-lg">corporate_fare</span>
                 <span className="text-[11px]">Industry</span>
               </button>
 
@@ -384,7 +385,7 @@ export default function Login() {
                     : 'text-ink-muted hover:text-navy hover:bg-white/60'
                 }`}
               >
-                <span className="text-sm">🏛️</span>
+                <span className="material-symbols-outlined text-lg">account_balance</span>
                 <span className="text-[11px]">Government</span>
               </button>
             </div>
@@ -396,8 +397,8 @@ export default function Login() {
           <div className="mb-5 p-3.5 bg-paper-dark/60 border-2 border-turmeric-deep/50 rounded-[2px] space-y-3">
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-bold uppercase tracking-wider text-turmeric-deep flex items-center gap-1 font-mono">
-                  <span>🏛️</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-turmeric-deep flex items-center gap-1.5 font-mono">
+                  <span className="material-symbols-outlined text-sm">account_balance</span>
                   <span>Select Official Role / पदनाम</span>
                 </span>
                 <span className="text-[10px] text-ink-muted font-mono">
@@ -414,7 +415,10 @@ export default function Login() {
                       : 'bg-white text-ink border-border hover:border-turmeric-deep'
                   }`}
                 >
-                  <div className="text-xs">🏛️ State</div>
+                  <div className="text-xs flex items-center justify-center gap-1">
+                    <span className="material-symbols-outlined text-sm">account_balance</span>
+                    <span>State</span>
+                  </div>
                   <div className="text-[9px] font-normal opacity-80 truncate">Nodal Officer</div>
                 </button>
 
@@ -427,7 +431,10 @@ export default function Login() {
                       : 'bg-white text-ink border-border hover:border-turmeric-deep'
                   }`}
                 >
-                  <div className="text-xs">🏢 District</div>
+                  <div className="text-xs flex items-center justify-center gap-1">
+                    <span className="material-symbols-outlined text-sm">location_city</span>
+                    <span>District</span>
+                  </div>
                   <div className="text-[9px] font-normal opacity-80 truncate">DC / Magistrate</div>
                 </button>
 
@@ -440,7 +447,10 @@ export default function Login() {
                       : 'bg-white text-ink border-border hover:border-turmeric-deep'
                   }`}
                 >
-                  <div className="text-xs">📋 Dept</div>
+                  <div className="text-xs flex items-center justify-center gap-1">
+                    <span className="material-symbols-outlined text-sm">domain</span>
+                    <span>Dept</span>
+                  </div>
                   <div className="text-[9px] font-normal opacity-80 truncate">Secretary / Head</div>
                 </button>
               </div>
@@ -453,8 +463,8 @@ export default function Login() {
           <div className="mb-5 p-3.5 bg-paper-dark/60 border-2 border-forest/30 rounded-[2px] space-y-3">
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-bold uppercase tracking-wider text-forest flex items-center gap-1 font-mono">
-                  <span>🎓</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-forest flex items-center gap-1.5 font-mono">
+                  <span className="material-symbols-outlined text-sm">school</span>
                   <span>Select University Role / पदनाम</span>
                 </span>
                 <span className="text-[10px] text-ink-muted font-mono">
@@ -471,7 +481,10 @@ export default function Login() {
                       : 'bg-white text-ink border-border hover:border-forest'
                   }`}
                 >
-                  <div className="text-xs">👨‍🎓 Student</div>
+                  <div className="text-xs flex items-center justify-center gap-1">
+                    <span className="material-symbols-outlined text-sm">school</span>
+                    <span>Student</span>
+                  </div>
                   <div className="text-[9px] font-normal opacity-80 truncate">Innovator Desk</div>
                 </button>
 
@@ -484,7 +497,10 @@ export default function Login() {
                       : 'bg-white text-ink border-border hover:border-forest'
                   }`}
                 >
-                  <div className="text-xs">👨‍🏫 Mentor</div>
+                  <div className="text-xs flex items-center justify-center gap-1">
+                    <span className="material-symbols-outlined text-sm">supervisor_account</span>
+                    <span>Mentor</span>
+                  </div>
                   <div className="text-[9px] font-normal opacity-80 truncate">Faculty Workspace</div>
                 </button>
 
@@ -497,7 +513,10 @@ export default function Login() {
                       : 'bg-white text-ink border-border hover:border-forest'
                   }`}
                 >
-                  <div className="text-xs">🏛️ Dean R&amp;D</div>
+                  <div className="text-xs flex items-center justify-center gap-1">
+                    <span className="material-symbols-outlined text-sm">account_balance</span>
+                    <span>Dean R&amp;D</span>
+                  </div>
                   <div className="text-[9px] font-normal opacity-80 truncate">Institutional Admin</div>
                 </button>
               </div>
@@ -631,8 +650,8 @@ export default function Login() {
         {/* 1-CLICK DEMO ACCOUNTS FOR EVALUATION */}
         <div className="mt-8 pt-5 border-t border-border">
           <div className="flex items-center justify-between mb-2.5">
-            <span className="font-mono text-[11px] text-ink font-bold uppercase tracking-wider flex items-center gap-1">
-              <span>⚡</span>
+            <span className="font-mono text-[11px] text-ink font-bold uppercase tracking-wider flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-sm text-turmeric-deep">bolt</span>
               <span>1-Click Fast Demo Credentials (SIH 2026)</span>
             </span>
             <span className="text-[10px] text-forest font-mono">No password required</span>
@@ -647,7 +666,8 @@ export default function Login() {
             >
               <div>
                 <div className="text-xs font-bold text-navy flex items-center gap-1.5">
-                  <span>👥 Asha Devi (Citizen Grievant)</span>
+                  <span className="material-symbols-outlined text-sm">person</span>
+                  <span>Asha Devi (Citizen Grievant)</span>
                   <span className="text-[9px] bg-paper-dark px-1.5 py-0.5 rounded-[2px] border border-border">Ranchi District</span>
                 </div>
                 <div className="font-mono text-[10px] text-ink-muted mt-0.5">asha.devi@example.com</div>
@@ -665,7 +685,10 @@ export default function Login() {
                 className="p-2.5 bg-turmeric/10 border border-turmeric-deep hover:bg-turmeric/20 text-ink rounded-[2px] text-left transition-colors"
               >
                 <div className="text-[11px] font-bold text-navy flex items-center justify-between">
-                  <span>👨‍🎓 Student Innovator</span>
+                  <span className="flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">school</span>
+                    <span>Student Innovator</span>
+                  </span>
                   <span className="text-[9px] bg-turmeric px-1 py-0.2 rounded-[2px]">3rd Yr CSE</span>
                 </div>
                 <div className="font-mono text-[10px] text-ink-muted truncate mt-0.5">himmat@nitjsr.ac.in</div>
@@ -680,7 +703,10 @@ export default function Login() {
                 className="p-2.5 bg-forest/10 border border-forest hover:bg-forest/20 text-forest rounded-[2px] text-left transition-colors"
               >
                 <div className="text-[11px] font-bold text-forest flex items-center justify-between">
-                  <span>👨‍🏫 Faculty Mentor</span>
+                  <span className="flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">supervisor_account</span>
+                    <span>Faculty Mentor</span>
+                  </span>
                   <span className="text-[9px] bg-forest text-white px-1 py-0.2 rounded-[2px]">PI Guide</span>
                 </div>
                 <div className="font-mono text-[10px] text-forest/90 truncate mt-0.5">rsharma.env@nitjsr.ac.in</div>
@@ -695,7 +721,10 @@ export default function Login() {
                 className="p-2.5 bg-navy/5 border border-navy hover:bg-navy/15 text-navy rounded-[2px] text-left transition-colors"
               >
                 <div className="text-[11px] font-bold text-navy flex items-center justify-between">
-                  <span>🏛️ Dean R&amp;D Desk</span>
+                  <span className="flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">account_balance</span>
+                    <span>Dean R&amp;D Desk</span>
+                  </span>
                   <span className="text-[9px] bg-navy text-white px-1 py-0.2 rounded-[2px]">NIT JSR</span>
                 </div>
                 <div className="font-mono text-[10px] text-navy/90 truncate mt-0.5">dean@nitjsr.ac.in</div>
@@ -714,7 +743,7 @@ export default function Login() {
               >
                 <div>
                   <div className="text-xs font-bold text-navy flex items-center gap-1.5">
-                    <span>💼</span>
+                    <span className="material-symbols-outlined text-sm">corporate_fare</span>
                     <span>Tata Steel CSR Foundation</span>
                     <span className="text-[9px] bg-navy text-white px-1.5 py-0.2 rounded font-mono">1-CLICK LOGIN</span>
                   </div>
@@ -736,7 +765,10 @@ export default function Login() {
                 onClick={() => handleQuickDemo('asha.devi@example.com', 'citizen')}
                 className="p-2.5 bg-paper border border-border hover:border-navy hover:bg-white text-ink rounded-[2px] text-left transition-colors"
               >
-                <div className="text-[11px] font-bold text-ink">👥 Citizen Grievant</div>
+                <div className="text-[11px] font-bold text-ink flex items-center gap-1">
+                  <span className="material-symbols-outlined text-xs">groups</span>
+                  <span>Citizen Grievant</span>
+                </div>
                 <div className="font-mono text-[10px] text-ink-muted truncate">asha.devi@example.com</div>
                 <span className="text-[9px] font-bold text-navy block mt-1">→ Citizen Dashboard</span>
               </button>
@@ -746,7 +778,10 @@ export default function Login() {
                 onClick={() => handleQuickDemo('tata.csr@tatasteel.com', 'industry')}
                 className="p-2.5 bg-paper border border-border hover:border-navy hover:bg-white text-ink rounded-[2px] text-left transition-colors"
               >
-                <div className="text-[11px] font-bold text-ink">💼 Tata Steel CSR</div>
+                <div className="text-[11px] font-bold text-ink flex items-center gap-1">
+                  <span className="material-symbols-outlined text-xs">corporate_fare</span>
+                  <span>Tata Steel CSR</span>
+                </div>
                 <div className="font-mono text-[10px] text-ink-muted truncate">tata.csr@tatasteel.com</div>
                 <span className="text-[9px] font-bold text-navy block mt-1">→ Industry Portal</span>
               </button>
@@ -756,7 +791,10 @@ export default function Login() {
                 onClick={() => handleQuickDemo('admin@sihportal.dev', 'admin')}
                 className="p-2.5 bg-paper border border-navy/40 hover:border-navy hover:bg-white text-navy rounded-[2px] text-left transition-colors"
               >
-                <div className="text-[11px] font-bold text-navy">🏛️ Govt. Administrator</div>
+                <div className="text-[11px] font-bold text-navy flex items-center gap-1">
+                  <span className="material-symbols-outlined text-xs">account_balance</span>
+                  <span>Govt. Administrator</span>
+                </div>
                 <div className="font-mono text-[10px] text-ink-muted truncate">admin@sihportal.dev</div>
                 <span className="text-[9px] font-bold text-urgent block mt-1">→ AI Queue &amp; Triage</span>
               </button>
@@ -807,7 +845,7 @@ export default function Login() {
                 onClick={() => setShowAllRoles(true)}
                 className="text-[11px] text-ink-muted hover:text-navy hover:underline transition-colors flex items-center gap-1 self-start sm:self-auto cursor-pointer font-medium whitespace-nowrap"
               >
-                <span>🌐</span>
+                <span className="material-symbols-outlined text-xs">language</span>
                 <span>Show All Portals</span>
               </button>
             )}

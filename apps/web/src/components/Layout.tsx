@@ -195,14 +195,23 @@ export function Layout() {
                         : 'bg-navy text-white border-navy hover:bg-navy-deep'
                     }`}
                   >
-                    <span>
-                      {user.role === 'university'
-                        ? '🏛️ University Dashboard'
-                        : user.role === 'admin'
-                          ? '⚙️ Admin Dashboard'
-                          : user.role === 'industry'
-                            ? '💼 Industry Portal'
-                            : '📋 My Grievances'}
+                    <span className="flex items-center gap-1.5">
+                      {user.role === 'university' && <span className="material-symbols-outlined text-sm">school</span>}
+                      {user.role === 'admin' && <span className="material-symbols-outlined text-sm">settings</span>}
+                      {user.role === 'industry' && <span className="material-symbols-outlined text-sm">corporate_fare</span>}
+                      {user.role === 'government' && <span className="material-symbols-outlined text-sm">account_balance</span>}
+                      {user.role === 'citizen' && <span className="material-symbols-outlined text-sm">format_list_bulleted</span>}
+                      <span>
+                        {user.role === 'university'
+                          ? 'University Dashboard'
+                          : user.role === 'admin'
+                            ? 'Admin Dashboard'
+                            : user.role === 'industry'
+                              ? 'Industry Portal'
+                              : user.role === 'government'
+                                ? 'Government Dashboard'
+                                : 'My Grievances'}
+                      </span>
                     </span>
                   </Link>
                 </div>
@@ -242,7 +251,7 @@ export function Layout() {
                           className="flex items-start gap-2.5 px-3 py-2 hover:bg-paper text-ink transition-colors border-b border-border/50"
                           onClick={() => setLoginMenuOpen(false)}
                         >
-                          <span className="text-base mt-0.5">🏛️</span>
+                          <span className="material-symbols-outlined text-base mt-0.5 text-navy">account_balance</span>
                           <div>
                             <div className="text-xs font-bold text-navy">Government / State Admin</div>
                             <div className="text-[10px] text-ink-muted">AI queue &amp; grievance triage</div>
@@ -253,21 +262,22 @@ export function Layout() {
                           className="flex items-start gap-2.5 px-3 py-2 hover:bg-paper text-ink transition-colors border-b border-border/50"
                           onClick={() => setLoginMenuOpen(false)}
                         >
-                          <span className="text-base mt-0.5">👥</span>
+                          <span className="material-symbols-outlined text-base mt-0.5 text-navy">groups</span>
                           <div>
                             <div className="text-xs font-bold text-navy">Citizen Grievance Portal</div>
                             <div className="text-[10px] text-ink-muted">Track complaints &amp; local issues</div>
                           </div>
                         </Link>
-                        <div className="bg-paper-dark/70 px-3 py-1 text-[10px] font-bold text-forest uppercase tracking-wider font-mono border-b border-border/40">
-                          🎓 University Ecosystem
+                        <div className="bg-paper-dark/70 px-3 py-1 text-[10px] font-bold text-forest uppercase tracking-wider font-mono border-b border-border/40 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-xs">school</span>
+                          <span>University Ecosystem</span>
                         </div>
                         <Link
                           to="/login?role=university&type=student"
                           className="flex items-start gap-2 px-3 py-1.5 hover:bg-paper text-ink transition-colors pl-5 border-b border-border/30"
                           onClick={() => setLoginMenuOpen(false)}
                         >
-                          <span className="text-xs mt-0.5">👨‍🎓</span>
+                          <span className="material-symbols-outlined text-sm mt-0.5 text-forest">school</span>
                           <div>
                             <div className="text-xs font-bold text-navy">Student Innovator Desk</div>
                             <div className="text-[10px] text-ink-muted">Deliverables, GPS photos &amp; telemetry</div>
@@ -278,7 +288,7 @@ export function Layout() {
                           className="flex items-start gap-2 px-3 py-1.5 hover:bg-paper text-ink transition-colors pl-5 border-b border-border/30"
                           onClick={() => setLoginMenuOpen(false)}
                         >
-                          <span className="text-xs mt-0.5">👨‍🏫</span>
+                          <span className="material-symbols-outlined text-sm mt-0.5 text-forest">supervisor_account</span>
                           <div>
                             <div className="text-xs font-bold text-navy">Faculty Mentor Workspace</div>
                             <div className="text-[10px] text-ink-muted">Project review &amp; student messaging</div>
@@ -289,7 +299,7 @@ export function Layout() {
                           className="flex items-start gap-2 px-3 py-1.5 hover:bg-paper text-ink transition-colors pl-5 border-b border-border/50"
                           onClick={() => setLoginMenuOpen(false)}
                         >
-                          <span className="text-xs mt-0.5">🏛️</span>
+                          <span className="material-symbols-outlined text-sm mt-0.5 text-navy">account_balance</span>
                           <div>
                             <div className="text-xs font-bold text-navy">Dean R&amp;D / Institutional Admin</div>
                             <div className="text-[10px] text-ink-muted">Proposal approvals &amp; fund allocations</div>
@@ -300,7 +310,7 @@ export function Layout() {
                           className="flex items-start gap-2.5 px-3 py-2 hover:bg-paper text-ink transition-colors"
                           onClick={() => setLoginMenuOpen(false)}
                         >
-                          <span className="text-base mt-0.5">💼</span>
+                          <span className="material-symbols-outlined text-base mt-0.5 text-navy">corporate_fare</span>
                           <div>
                             <div className="text-xs font-bold text-navy">Industry / CSR Partner</div>
                             <div className="text-[10px] text-ink-muted">Corporate sponsorship &amp; co-funding</div>
@@ -344,7 +354,7 @@ export function Layout() {
                           className="flex items-start gap-2.5 px-3 py-2 hover:bg-paper text-ink transition-colors border-b border-border/50"
                           onClick={() => setRegisterMenuOpen(false)}
                         >
-                          <span className="text-base mt-0.5">👥</span>
+                          <span className="material-symbols-outlined text-base mt-0.5 text-navy">groups</span>
                           <div>
                             <div className="text-xs font-bold text-navy">Citizen Account</div>
                             <div className="text-[10px] text-ink-muted">LGD &amp; Pincode-integrated reporting</div>
@@ -355,21 +365,22 @@ export function Layout() {
                           className="flex items-start gap-2.5 px-3 py-2 hover:bg-paper text-ink transition-colors border-b border-border/50"
                           onClick={() => setRegisterMenuOpen(false)}
                         >
-                          <span className="text-base mt-0.5">🏛️</span>
+                          <span className="material-symbols-outlined text-base mt-0.5 text-navy">account_balance</span>
                           <div>
                             <div className="text-xs font-bold text-navy">Government / State Admin</div>
                             <div className="text-[10px] text-ink-muted">State, District, or Department Official</div>
                           </div>
                         </Link>
-                        <div className="bg-paper-dark/70 px-3 py-1 text-[10px] font-bold text-forest uppercase tracking-wider font-mono border-b border-border/40">
-                          🎓 University Onboarding
+                        <div className="bg-paper-dark/70 px-3 py-1 text-[10px] font-bold text-forest uppercase tracking-wider font-mono border-b border-border/40 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-xs">school</span>
+                          <span>University Onboarding</span>
                         </div>
                         <Link
                           to="/register?role=university&type=student"
                           className="flex items-start gap-2 px-3 py-1.5 hover:bg-paper text-ink transition-colors pl-5 border-b border-border/30"
                           onClick={() => setRegisterMenuOpen(false)}
                         >
-                          <span className="text-xs mt-0.5">👨‍🎓</span>
+                          <span className="material-symbols-outlined text-sm mt-0.5 text-forest">school</span>
                           <div>
                             <div className="text-xs font-bold text-navy">Student Researcher</div>
                             <div className="text-[10px] text-ink-muted">Join innovation team with Roll No / APAAR</div>
@@ -380,7 +391,7 @@ export function Layout() {
                           className="flex items-start gap-2 px-3 py-1.5 hover:bg-paper text-ink transition-colors pl-5 border-b border-border/30"
                           onClick={() => setRegisterMenuOpen(false)}
                         >
-                          <span className="text-xs mt-0.5">👨‍🏫</span>
+                          <span className="material-symbols-outlined text-sm mt-0.5 text-forest">supervisor_account</span>
                           <div>
                             <div className="text-xs font-bold text-navy">Faculty Mentor / PI</div>
                             <div className="text-[10px] text-ink-muted">Guide students with Vidwan / Faculty ID</div>
@@ -391,7 +402,7 @@ export function Layout() {
                           className="flex items-start gap-2 px-3 py-1.5 hover:bg-paper text-ink transition-colors pl-5 border-b border-border/50"
                           onClick={() => setRegisterMenuOpen(false)}
                         >
-                          <span className="text-xs mt-0.5">🏛️</span>
+                          <span className="material-symbols-outlined text-sm mt-0.5 text-navy">account_balance</span>
                           <div>
                             <div className="text-xs font-bold text-navy">University / Institution Node</div>
                             <div className="text-[10px] text-ink-muted">Register university with AISHE code</div>
@@ -402,7 +413,7 @@ export function Layout() {
                           className="flex items-start gap-2.5 px-3 py-2 hover:bg-paper text-ink transition-colors"
                           onClick={() => setRegisterMenuOpen(false)}
                         >
-                          <span className="text-base mt-0.5">💼</span>
+                          <span className="material-symbols-outlined text-base mt-0.5 text-navy">corporate_fare</span>
                           <div>
                             <div className="text-xs font-bold text-navy">Industry / CSR Partner</div>
                             <div className="text-[10px] text-ink-muted">Corporate sponsorship &amp; co-funding</div>
@@ -530,7 +541,7 @@ export function Layout() {
                         onClick={() => setUnivDropdownOpen(false)}
                         className="flex items-start gap-2.5 px-3 py-2 hover:bg-navy text-white transition-colors border-b border-white/10"
                       >
-                        <span className="text-base mt-0.5">🏛️</span>
+                        <span className="material-symbols-outlined text-base mt-0.5 text-turmeric">account_balance</span>
                         <div>
                           <div className="text-xs font-bold text-turmeric">Dean R&amp;D Desk</div>
                           <div className="text-[10px] text-white/70">Institutional proposals, MoUs &amp; approvals</div>
@@ -541,7 +552,7 @@ export function Layout() {
                         onClick={() => setUnivDropdownOpen(false)}
                         className="flex items-start gap-2.5 px-3 py-2 hover:bg-navy text-white transition-colors border-b border-white/10"
                       >
-                        <span className="text-base mt-0.5">👨‍🏫</span>
+                        <span className="material-symbols-outlined text-base mt-0.5 text-turmeric">supervisor_account</span>
                         <div>
                           <div className="text-xs font-bold text-turmeric">Faculty Mentor Workspace</div>
                           <div className="text-[10px] text-white/70">Guide student projects, telemetry &amp; live chat</div>
@@ -552,7 +563,7 @@ export function Layout() {
                         onClick={() => setUnivDropdownOpen(false)}
                         className="flex items-start gap-2.5 px-3 py-2 hover:bg-navy text-white transition-colors border-b border-white/10"
                       >
-                        <span className="text-base mt-0.5">👨‍🎓</span>
+                        <span className="material-symbols-outlined text-base mt-0.5 text-turmeric">school</span>
                         <div>
                           <div className="text-xs font-bold text-turmeric">Student Innovator Dashboard</div>
                           <div className="text-[10px] text-white/70">Proof of work, GPS photos &amp; live deliverables</div>
@@ -565,16 +576,18 @@ export function Layout() {
                         <Link
                           to="/login?role=university"
                           onClick={() => setUnivDropdownOpen(false)}
-                          className="px-2 py-1.5 bg-white/10 hover:bg-white/20 text-center rounded-[2px] text-[11px] font-bold text-white uppercase tracking-wider"
+                          className="px-2 py-1.5 bg-white/10 hover:bg-white/20 text-center rounded-[2px] text-[11px] font-bold text-white uppercase tracking-wider flex items-center justify-center gap-1"
                         >
-                          🔑 Sign In
+                          <span className="material-symbols-outlined text-xs">login</span>
+                          <span>Sign In</span>
                         </Link>
                         <Link
                           to="/register?role=university"
                           onClick={() => setUnivDropdownOpen(false)}
-                          className="px-2 py-1.5 bg-turmeric text-ink hover:bg-turmeric-deep text-center rounded-[2px] text-[11px] font-bold uppercase tracking-wider"
+                          className="px-2 py-1.5 bg-turmeric text-ink hover:bg-turmeric-deep text-center rounded-[2px] text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-1"
                         >
-                          📝 Register
+                          <span className="material-symbols-outlined text-xs">person_add</span>
+                          <span>Register</span>
                         </Link>
                       </div>
                     </div>
@@ -655,18 +668,22 @@ export function Layout() {
 
                 {/* University Section in Mobile Drawer */}
                 <div className="bg-navy-deep/80 px-3 py-2">
-                  <div className="text-[10px] font-mono text-turmeric font-bold mb-1">
-                    🎓 UNIVERSITY ECOSYSTEM
+                  <div className="text-[10px] font-mono text-turmeric font-bold mb-1 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs">school</span>
+                    <span>UNIVERSITY ECOSYSTEM</span>
                   </div>
                   <div className="flex flex-col gap-1 pl-2 font-normal normal-case">
                     <Link to="/university" className="py-1 text-xs text-white hover:text-turmeric flex items-center gap-1.5">
-                      <span>🏛️</span> <span>Dean R&amp;D Desk</span>
+                      <span className="material-symbols-outlined text-sm">account_balance</span>
+                      <span>Dean R&amp;D Desk</span>
                     </Link>
                     <Link to="/university/mentor" className="py-1 text-xs text-white hover:text-turmeric flex items-center gap-1.5">
-                      <span>👨‍🏫</span> <span>Faculty Mentor Workspace</span>
+                      <span className="material-symbols-outlined text-sm">supervisor_account</span>
+                      <span>Faculty Mentor Workspace</span>
                     </Link>
                     <Link to="/student" className="py-1 text-xs text-white hover:text-turmeric flex items-center gap-1.5">
-                      <span>👨‍🎓</span> <span>Student Innovator Dashboard</span>
+                      <span className="material-symbols-outlined text-sm">school</span>
+                      <span>Student Innovator Dashboard</span>
                     </Link>
                     <div className="flex items-center gap-2 pt-1 mt-1 border-t border-white/10">
                       <Link to="/login?role=university" className="text-[11px] font-bold text-turmeric underline">
